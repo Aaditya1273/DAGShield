@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Settings, Shield, Wallet, Menu, X } from "lucide-react"
+import { Bell, Settings, Shield, Menu, X } from "lucide-react"
+import Link from "next/link"
 
 export function DashboardHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -25,18 +27,22 @@ export function DashboardHeader() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Button variant="ghost" size="sm">
-              Dashboard
-            </Button>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm">
+                Dashboard
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm">
               Nodes
             </Button>
             <Button variant="ghost" size="sm">
               Analytics
             </Button>
-            <Button variant="ghost" size="sm">
-              Rewards
-            </Button>
+            <Link href="/gamification">
+              <Button variant="ghost" size="sm">
+                Rewards
+              </Button>
+            </Link>
           </nav>
 
           {/* Actions */}
@@ -46,10 +52,9 @@ export function DashboardHeader() {
               <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">3</Badge>
             </Button>
 
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center space-x-2 bg-transparent">
-              <Wallet className="h-4 w-4" />
-              <span>0x1234...5678</span>
-            </Button>
+            <div className="hidden sm:block">
+              <ConnectButton showBalance={false} />
+            </div>
 
             <Button variant="ghost" size="icon">
               <Settings className="h-5 w-5" />
@@ -71,18 +76,25 @@ export function DashboardHeader() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border py-4">
             <nav className="flex flex-col space-y-2">
-              <Button variant="ghost" size="sm" className="justify-start">
-                Dashboard
-              </Button>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm" className="justify-start w-full">
+                  Dashboard
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" className="justify-start">
                 Nodes
               </Button>
               <Button variant="ghost" size="sm" className="justify-start">
                 Analytics
               </Button>
-              <Button variant="ghost" size="sm" className="justify-start">
-                Rewards
-              </Button>
+              <Link href="/gamification">
+                <Button variant="ghost" size="sm" className="justify-start w-full">
+                  Rewards
+                </Button>
+              </Link>
+              <div className="pt-4">
+                <ConnectButton />
+              </div>
             </nav>
           </div>
         )}

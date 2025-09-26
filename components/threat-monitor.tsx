@@ -2,18 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Shield, Zap } from "lucide-react"
-
-const threatData = [
-  { time: "00:00", threats: 12, blocked: 11 },
-  { time: "04:00", threats: 8, blocked: 8 },
-  { time: "08:00", threats: 24, blocked: 22 },
-  { time: "12:00", threats: 18, blocked: 17 },
-  { time: "16:00", threats: 32, blocked: 30 },
-  { time: "20:00", threats: 15, blocked: 14 },
-  { time: "24:00", threats: 9, blocked: 9 },
-]
 
 export function ThreatMonitor() {
   return (
@@ -52,36 +41,12 @@ export function ThreatMonitor() {
           </div>
         </div>
 
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={threatData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
-              <XAxis dataKey="time" stroke="rgb(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="rgb(var(--muted-foreground))" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgb(var(--card))",
-                  border: "1px solid rgb(var(--border))",
-                  borderRadius: "8px",
-                  color: "rgb(var(--foreground))",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="threats"
-                stroke="rgb(var(--primary))"
-                strokeWidth={2}
-                name="Threats Detected"
-              />
-              <Line
-                type="monotone"
-                dataKey="blocked"
-                stroke="rgb(var(--accent))"
-                strokeWidth={2}
-                name="Threats Blocked"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="h-64 flex items-center justify-center bg-muted/20 rounded-lg border border-border">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Threat Detection Chart</p>
+            <p className="text-xs text-muted-foreground mt-1">Real-time monitoring active</p>
+          </div>
         </div>
       </CardContent>
     </Card>
