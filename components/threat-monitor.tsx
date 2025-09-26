@@ -14,21 +14,21 @@ export function ThreatMonitor() {
             <span>Threat Detection</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="text-accent border-accent">
-              <Zap className="h-3 w-3 mr-1" />
+            <Badge variant="outline" className="text-black border-black">
+              <Zap className="h-3 w-3 mr-1 text-black" />
               Real-time
             </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-primary">1,247</div>
             <div className="text-sm text-muted-foreground">Threats Detected</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-accent">1,198</div>
+            <div className="text-2xl font-bold text-black">1,198</div>
             <div className="text-sm text-muted-foreground">Threats Blocked</div>
           </div>
           <div className="text-center">
@@ -38,6 +38,10 @@ export function ThreatMonitor() {
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">0.3s</div>
             <div className="text-sm text-muted-foreground">Avg Response</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-black">47ms</div>
+            <div className="text-sm text-muted-foreground">Consensus</div>
           </div>
         </div>
 

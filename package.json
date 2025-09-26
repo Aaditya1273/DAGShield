@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev --turbo",
+    "dev:fast": "NEXT_PRIVATE_SKIP_SIZE_LIMIT=1 next dev --turbo",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "analyze": "echo 'Install @next/bundle-analyzer first: npm install --save-dev @next/bundle-analyzer' && next build",
+    "clean": "rm -rf .next out dist node_modules/.cache"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

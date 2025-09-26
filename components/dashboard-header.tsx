@@ -48,7 +48,7 @@ export function DashboardHeader() {
           {/* Actions */}
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5 text-black" />
               <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">3</Badge>
             </Button>
 
@@ -57,7 +57,7 @@ export function DashboardHeader() {
             </div>
 
             <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
+              <Settings className="h-5 w-5 text-black" />
             </Button>
 
             {/* Mobile Menu Toggle */}

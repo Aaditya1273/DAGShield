@@ -56,8 +56,9 @@ const recentAchievements = [
   { id: 1, name: "First Blood", description: "Detected your first threat", reward: 100, unlocked: true },
   { id: 2, name: "Guardian", description: "Detected 100 threats", reward: 1000, unlocked: true },
   { id: 3, name: "Always On", description: "99% uptime for 30 days", reward: 2000, unlocked: true },
-  { id: 4, name: "Rising Star", description: "Reached level 10", reward: 500, unlocked: true },
-  { id: 5, name: "Sentinel", description: "Detected 1000 threats", reward: 10000, unlocked: false },
+  { id: 4, name: "Node Uptime Master", description: `Current uptime: ${userStats.nodeUptime}%`, reward: 1500, unlocked: true, showUptime: true },
+  { id: 5, name: "Rising Star", description: "Reached level 10", reward: 500, unlocked: true },
+  { id: 6, name: "Sentinel", description: "Detected 1000 threats", reward: 10000, unlocked: false },
 ]
 
 const leaderboard = [
@@ -183,8 +184,11 @@ export function GamificationDashboard() {
                         />
                       </div>
                       <div>
-                        <h3 className="font-medium text-foreground">{achievement.name}</h3>
-                        <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                        <h3 className="font-medium text-black">{achievement.name}</h3>
+                        <p className="text-sm text-black">{achievement.description}</p>
+                        {achievement.showUptime && (
+                          <div className="text-2xl font-bold text-black mt-1">{userStats.nodeUptime}%</div>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
