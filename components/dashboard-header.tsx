@@ -1,23 +1,57 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Settings, Shield, Menu, X } from "lucide-react"
+import { Bell, Settings, Shield, Menu, X, BarChart3, Server, Activity, Gift } from "lucide-react"
 import Link from "next/link"
 
 export function DashboardHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Navigation items with icons and active states
+  const navItems = [
+    { 
+      href: "/dashboard", 
+      label: "Dashboard", 
+      icon: BarChart3,
+      isActive: pathname === "/dashboard" || pathname.startsWith("/dashboard")
+    },
+    { 
+      href: "/nodes", 
+      label: "Nodes", 
+      icon: Server,
+      isActive: pathname === "/nodes" || pathname.startsWith("/nodes")
+    },
+    { 
+      href: "/analytics", 
+      label: "Analytics", 
+      icon: Activity,
+      isActive: pathname === "/analytics" || pathname.startsWith("/analytics")
+    },
+    { 
+      href: "/gamification", 
+      label: "Rewards", 
+      icon: Gift,
+      isActive: pathname === "/gamification" || pathname.startsWith("/gamification")
+    }
+  ]
+
+  // Debug: Log current pathname and active states
+  console.log("Current pathname:", pathname)
+  console.log("Nav items active states:", navItems.map(item => ({ label: item.label, isActive: item.isActive })))
 
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50 animate-slide-in-up">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 overflow-visible">
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-primary glow-blue" />
+          <div className="flex items-center space-x-4 animate-slide-in-right">
+            <div className="flex items-center space-x-2 smooth-hover">
+              <Shield className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold text-foreground">DAGShield</span>
             </div>
             <Badge variant="secondary" className="hidden sm:inline-flex">
@@ -26,37 +60,49 @@ export function DashboardHeader() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                Dashboard
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm">
-              Nodes
-            </Button>
-            <Button variant="ghost" size="sm">
-              Analytics
-            </Button>
-            <Link href="/gamification">
-              <Button variant="ghost" size="sm">
-                Rewards
-              </Button>
-            </Link>
+          <nav className="hidden md:flex items-center space-x-3 px-2">
+            {navItems.map((item, index) => {
+              const Icon = item.icon
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button 
+                    variant={item.isActive ? "default" : "ghost"} 
+                    size="sm" 
+                    className={`
+                      smooth-hover relative overflow-hidden group px-4 py-2
+                      ${item.isActive 
+                        ? 'bg-black text-white shadow-2xl scale-105 border-2 border-gray-300 rounded-lg' 
+                        : 'hover:bg-accent/50 text-black rounded-md'
+                      }
+                      stagger-${index + 2}
+                    `}
+                  >
+                    <Icon className={`h-4 w-4 mr-2 ${item.isActive ? 'text-white' : ''}`} />
+                    {item.label}
+                    {item.isActive && (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse" />
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              )
+            })}
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" className="relative">
+          <div className="flex items-center space-x-3 animate-slide-in-right">
+            <Button variant="ghost" size="icon" className="relative smooth-hover animate-scale-in stagger-1">
               <Bell className="h-5 w-5 text-black" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">3</Badge>
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive animate-pulse">3</Badge>
             </Button>
 
-            <div className="hidden sm:block">
+            <div className="hidden sm:block animate-scale-in stagger-2">
               <ConnectButton showBalance={false} />
             </div>
 
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="smooth-hover animate-scale-in stagger-3">
               <Settings className="h-5 w-5 text-black" />
             </Button>
 
@@ -64,7 +110,7 @@ export function DashboardHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden smooth-hover animate-scale-in stagger-4"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -74,25 +120,38 @@ export function DashboardHeader() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border py-4">
+          <div className="md:hidden border-t border-border py-4 animate-slide-in-up glass">
             <nav className="flex flex-col space-y-2">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="justify-start w-full">
-                  Dashboard
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="justify-start">
-                Nodes
-              </Button>
-              <Button variant="ghost" size="sm" className="justify-start">
-                Analytics
-              </Button>
-              <Link href="/gamification">
-                <Button variant="ghost" size="sm" className="justify-start w-full">
-                  Rewards
-                </Button>
-              </Link>
-              <div className="pt-4">
+              {navItems.map((item, index) => {
+                const Icon = item.icon
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <Button 
+                      variant={item.isActive ? "default" : "ghost"} 
+                      size="sm" 
+                      className={`
+                        justify-start w-full smooth-hover relative overflow-hidden
+                        ${item.isActive 
+                          ? 'bg-black text-white shadow-xl border-2 border-gray-300' 
+                          : 'hover:bg-accent/50 text-black'
+                        }
+                        stagger-${index + 1}
+                      `}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Icon className={`h-4 w-4 mr-2 ${item.isActive ? 'text-white' : ''}`} />
+                      {item.label}
+                      {item.isActive && (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-white rounded-full animate-pulse" />
+                        </>
+                      )}
+                    </Button>
+                  </Link>
+                )
+              })}
+              <div className="pt-4 animate-scale-in stagger-5">
                 <ConnectButton />
               </div>
             </nav>

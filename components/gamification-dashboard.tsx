@@ -1,74 +1,316 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useAccount } from 'wagmi'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trophy, Star, Flame, Award, Users, Clock } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Trophy, Star, Flame, Award, Users, Clock, Edit, User, CheckCircle } from "lucide-react"
 
-const userStats = {
-  level: 23,
-  experience: 23450,
-  nextLevelExp: 25000,
-  streak: 12,
-  totalRewards: 45678,
-  threatsDetected: 1247,
-  nodeUptime: 98.7,
-  challengesCompleted: 8,
-  achievements: 15,
-  rank: 42,
+// Types for node data (matching the nodes page)
+interface NodeData {
+  id: string;
+  name: string;
+  status: 'active' | 'inactive' | 'maintenance' | 'error';
+  performance: number;
+  rewards: number;
+  location: string;
+  uptime: number;
+  threatsDetected: number;
+  lastSeen: string;
+  version: string;
+  stakingAmount: number;
+  validatedTransactions: number;
+  earnings24h: number;
+  region: string;
 }
 
-const activeChallenges = [
-  {
-    id: 1,
-    name: "Threat Hunter",
-    description: "Detect 50 threats this week",
-    progress: 36,
-    target: 50,
-    reward: 500,
-    timeLeft: "2 days",
-    type: "weekly",
-  },
-  {
-    id: 2,
-    name: "Perfect Uptime",
-    description: "Maintain 99%+ uptime for 7 days",
-    progress: 5,
-    target: 7,
-    reward: 750,
-    timeLeft: "2 days",
-    type: "weekly",
-  },
-  {
-    id: 3,
-    name: "Community Guardian",
-    description: "Vote on 10 governance proposals",
-    progress: 7,
-    target: 10,
-    reward: 300,
-    timeLeft: "5 days",
-    type: "monthly",
-  },
-]
+// Load nodes from localStorage (same function as nodes page)
+const loadNodesFromStorage = (): NodeData[] => {
+  try {
+    const stored = localStorage.getItem('dagshield_nodes');
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Failed to load nodes from localStorage:', error);
+    return [];
+  }
+};
 
-const recentAchievements = [
-  { id: 1, name: "First Blood", description: "Detected your first threat", reward: 100, unlocked: true },
-  { id: 2, name: "Guardian", description: "Detected 100 threats", reward: 1000, unlocked: true },
-  { id: 3, name: "Always On", description: "99% uptime for 30 days", reward: 2000, unlocked: true },
-  { id: 4, name: "Node Uptime Master", description: `Current uptime: ${userStats.nodeUptime}%`, reward: 1500, unlocked: true, showUptime: true },
-  { id: 5, name: "Rising Star", description: "Reached level 10", reward: 500, unlocked: true },
-  { id: 6, name: "Sentinel", description: "Detected 1000 threats", reward: 10000, unlocked: false },
-]
+// Fetch real gamification data from SQLite database
+const fetchGamificationData = async (address: string, nodes: NodeData[]) => {
+  try {
+    // Update user data with current nodes
+    const updateResponse = await fetch(`/api/gamification/${address}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodes })
+    });
+    
+    if (!updateResponse.ok) throw new Error('Failed to update user data');
+    
+    const userData = await updateResponse.json();
+    
+    // Fetch challenges
+    const challengesResponse = await fetch(`/api/challenges/${address}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodes, userStats: userData.user })
+    });
+    
+    const challengesData = challengesResponse.ok ? await challengesResponse.json() : { challenges: [] };
+    
+    // Fetch leaderboard
+    const leaderboardResponse = await fetch('/api/leaderboard');
+    const leaderboardData = leaderboardResponse.ok ? await leaderboardResponse.json() : { leaderboard: [] };
+    
+    return {
+      userStats: userData.user,
+      challenges: challengesData.challenges || [],
+      leaderboard: leaderboardData.leaderboard || []
+    };
+  } catch (error) {
+    console.error('Error fetching gamification data:', error);
+    return null;
+  }
+};
 
-const leaderboard = [
-  { rank: 1, user: "0x1234...5678", score: 125847, level: 45 },
-  { rank: 2, user: "0xabcd...efgh", score: 118923, level: 42 },
-  { rank: 3, user: "0x9876...5432", score: 112456, level: 41 },
-  { rank: 42, user: "You", score: 45678, level: 23 },
-]
+// Generate real user stats from actual node data
+const generateRealUserStats = (nodes: NodeData[]) => {
+  const totalThreats = nodes.reduce((sum, node) => sum + node.threatsDetected, 0);
+  const totalRewards = nodes.reduce((sum, node) => sum + node.rewards, 0);
+  const avgUptime = nodes.length > 0 ? nodes.reduce((sum, node) => sum + node.uptime, 0) / nodes.length : 0;
+  const totalTransactions = nodes.reduce((sum, node) => sum + node.validatedTransactions, 0);
+  const totalStaked = nodes.reduce((sum, node) => sum + node.stakingAmount, 0);
+  
+  // Calculate level based on total rewards (every 1000 DAG = 1 level)
+  const level = Math.floor(totalRewards / 1000) + 1;
+  const experience = Math.floor(totalRewards * 10); // 10 XP per DAG
+  const nextLevelExp = level * 10000; // Next level requires 10k more XP
+  
+  // Calculate streak (mock for now, could be based on node activity)
+  const streak = Math.min(Math.floor(avgUptime / 10), 30); // Max 30 day streak
+  
+  // Calculate challenges completed based on achievements
+  const challengesCompleted = Math.floor(totalThreats / 100) + Math.floor(avgUptime / 20);
+  
+  // Calculate rank based on total rewards (mock ranking)
+  const rank = Math.max(1, 100 - Math.floor(totalRewards / 500));
+  
+  return {
+    level,
+    experience,
+    nextLevelExp,
+    streak,
+    totalRewards: Math.floor(totalRewards),
+    threatsDetected: totalThreats,
+    nodeUptime: Math.round(avgUptime * 10) / 10,
+    challengesCompleted,
+    achievements: Math.floor(totalThreats / 50) + Math.floor(avgUptime / 25),
+    rank,
+    totalNodes: nodes.length,
+    totalTransactions,
+    totalStaked
+  };
+};
+
+// Static challenges removed - now using real data from SQLite database
+
+// Generate real achievements based on user stats
+const generateRealAchievements = (userStats: any) => {
+  if (!userStats) return [];
+  
+  return [
+    { 
+      id: 1, 
+      name: "First Blood", 
+      description: "Detected your first threat", 
+      reward: 100, 
+      unlocked: userStats.threatsDetected > 0 
+    },
+    { 
+      id: 2, 
+      name: "Guardian", 
+      description: "Detected 100 threats", 
+      reward: 1000, 
+      unlocked: userStats.threatsDetected >= 100 
+    },
+    { 
+      id: 3, 
+      name: "Always On", 
+      description: "99% uptime for 30 days", 
+      reward: 2000, 
+      unlocked: userStats.nodeUptime >= 99 
+    },
+    { 
+      id: 4, 
+      name: "Node Uptime Master", 
+      description: "Current uptime: " + Math.round(userStats.nodeUptime) + "%", 
+      reward: 1500, 
+      unlocked: userStats.nodeUptime >= 95, 
+      showUptime: true 
+    },
+    { 
+      id: 5, 
+      name: "Rising Star", 
+      description: "Reached level 10", 
+      reward: 500, 
+      unlocked: userStats.level >= 10 
+    },
+    { 
+      id: 6, 
+      name: "Sentinel", 
+      description: "Detected 1000 threats", 
+      reward: 10000, 
+      unlocked: userStats.threatsDetected >= 1000 
+    },
+    { 
+      id: 7, 
+      name: "Node Master", 
+      description: "Deploy 5 nodes", 
+      reward: 2500, 
+      unlocked: userStats.totalNodes >= 5 
+    },
+    { 
+      id: 8, 
+      name: "Whale Staker", 
+      description: "Stake 100K DAG tokens", 
+      reward: 5000, 
+      unlocked: userStats.totalStaked >= 100000 
+    }
+  ];
+};
+
+// Static leaderboard removed - now using real data from SQLite database
+
+// LocalStorage key for user profile
+const USER_PROFILE_KEY = 'dagshield_user_profile';
+
+// Helper functions for user profile
+const saveUserProfile = (address: string, profile: any) => {
+  try {
+    const profiles = JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || '{}');
+    profiles[address] = profile;
+    localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profiles));
+    console.log('User profile saved:', profile);
+  } catch (error) {
+    console.error('Failed to save user profile:', error);
+  }
+};
+
+const loadUserProfile = (address: string) => {
+  try {
+    const profiles = JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || '{}');
+    return profiles[address] || { name: '', title: 'Guardian Protector' };
+  } catch (error) {
+    console.error('Failed to load user profile:', error);
+    return { name: '', title: 'Guardian Protector' };
+  }
+};
+
+// Export function to get user display name by address (for use in other components)
+export const getUserDisplayName = (address: string) => {
+  const profile = loadUserProfile(address);
+  if (profile.name) return profile.name;
+  if (address) return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return 'Anonymous';
+};
 
 export function GamificationDashboard() {
+  const { address } = useAccount();
+  const [userProfile, setUserProfile] = useState({ name: '', title: 'Guardian Protector' });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [userStats, setUserStats] = useState<any>(null);
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load user profile on component mount
+  useEffect(() => {
+    if (address) {
+      const profile = loadUserProfile(address);
+      setUserProfile(profile);
+      setEditName(profile.name);
+    }
+  }, [address]);
+
+  // Load real gamification data from SQLite database
+  useEffect(() => {
+    const loadGamificationData = async () => {
+      if (!address) return;
+      
+      setLoading(true);
+      const nodes = loadNodesFromStorage();
+      console.log('Loading gamification data for address:', address, 'with nodes:', nodes);
+      
+      const data = await fetchGamificationData(address, nodes);
+      if (data) {
+        console.log('Fetched gamification data:', data);
+        setUserStats(data.userStats);
+        setChallenges(data.challenges);
+        setLeaderboard(data.leaderboard);
+      } else {
+        // Fallback to local calculation if API fails
+        const fallbackStats = generateRealUserStats(nodes);
+        setUserStats(fallbackStats);
+        setChallenges([]);
+        setLeaderboard([]);
+      }
+      setLoading(false);
+    };
+
+    loadGamificationData();
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(loadGamificationData, 30000);
+    return () => clearInterval(interval);
+  }, [address]);
+
+  // Handle name update
+  const handleUpdateName = () => {
+    if (!address || !editName.trim()) return;
+    
+    const updatedProfile = { ...userProfile, name: editName.trim() };
+    setUserProfile(updatedProfile);
+    saveUserProfile(address, updatedProfile);
+    
+    setShowEditModal(false);
+    setShowSuccessNotification(true);
+    
+    // Hide success notification after 2 seconds
+    setTimeout(() => {
+      setShowSuccessNotification(false);
+    }, 2000);
+  };
+
+  // Get display name (use custom name or shortened address)
+  const getDisplayName = () => {
+    if (userProfile.name) return userProfile.name;
+    if (address) return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    return 'Anonymous';
+  };
+
+  // Show loading state
+  if (loading || !userStats) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Star className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading gamification data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate real achievements based on current stats
+  const recentAchievements = generateRealAchievements(userStats);
+
   return (
     <div className="space-y-6">
       {/* User Level & Progress */}
@@ -85,8 +327,19 @@ export function GamificationDashboard() {
                 </Badge>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Level {userStats.level}</h2>
-                <p className="text-muted-foreground">Guardian Protector</p>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-2xl font-bold text-foreground">Level {userStats.level}</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowEditModal(true)}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                </div>
+                <p className="text-lg font-medium text-foreground">{getDisplayName()}</p>
+                <p className="text-sm text-muted-foreground">{userProfile.title}</p>
               </div>
             </div>
             <div className="text-right">
@@ -102,12 +355,12 @@ export function GamificationDashboard() {
             <div className="flex justify-between text-sm">
               <span>Experience</span>
               <span>
-                {userStats.experience.toLocaleString()} / {userStats.nextLevelExp.toLocaleString()}
+                {userStats.experience?.toLocaleString() || 0} / {userStats.nextLevelExp?.toLocaleString() || 0}
               </span>
             </div>
-            <Progress value={(userStats.experience / userStats.nextLevelExp) * 100} className="h-3" />
+            <Progress value={userStats.nextLevelExp > 0 ? (userStats.experience / userStats.nextLevelExp) * 100 : 0} className="h-3" />
             <div className="text-xs text-muted-foreground">
-              {(userStats.nextLevelExp - userStats.experience).toLocaleString()} XP to next level
+              {((userStats.nextLevelExp || 0) - (userStats.experience || 0)).toLocaleString()} XP to next level
             </div>
           </div>
         </CardContent>
@@ -123,7 +376,7 @@ export function GamificationDashboard() {
 
         <TabsContent value="challenges" className="space-y-4">
           <div className="grid gap-4">
-            {activeChallenges.map((challenge) => (
+            {challenges.map((challenge: any) => (
               <Card key={challenge.id} className="bg-card border-border">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
@@ -176,11 +429,11 @@ export function GamificationDashboard() {
                     <div className="flex items-center space-x-3">
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          achievement.unlocked ? "bg-accent/20" : "bg-muted"
+                          achievement.unlocked ? "bg-gradient-to-br from-yellow-100 to-yellow-200 border border-yellow-300" : "bg-gray-100 border border-gray-300"
                         }`}
                       >
                         <Award
-                          className={`h-5 w-5 ${achievement.unlocked ? "text-accent" : "text-muted-foreground"}`}
+                          className={`h-5 w-5 ${achievement.unlocked ? "text-yellow-600" : "text-gray-400"}`}
                         />
                       </div>
                       <div>
@@ -193,11 +446,13 @@ export function GamificationDashboard() {
                     </div>
                     <div className="text-right">
                       {achievement.unlocked ? (
-                        <Badge className="bg-accent text-accent-foreground">Unlocked</Badge>
+                        <Badge className="bg-green-500 text-white">✓ Unlocked</Badge>
                       ) : (
-                        <Badge variant="outline">Locked</Badge>
+                        <Badge variant="outline" className="text-gray-500 border-gray-300">🔒 Locked</Badge>
                       )}
-                      <div className="text-sm text-accent mt-1">+{achievement.reward} DAG</div>
+                      <div className={`text-sm mt-1 font-medium ${achievement.unlocked ? 'text-green-600' : 'text-gray-500'}`}>
+                        +{achievement.reward} DAG
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -216,11 +471,11 @@ export function GamificationDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {leaderboard.map((entry) => (
+                {leaderboard.map((entry: any) => (
                   <div
                     key={entry.rank}
                     className={`flex items-center justify-between p-3 rounded-lg ${
-                      entry.user === "You" ? "bg-primary/10 border border-primary/20" : "bg-muted/20"
+                      entry.walletAddress === address ? "bg-primary/10 border border-primary/20" : "bg-muted/20"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -238,12 +493,14 @@ export function GamificationDashboard() {
                         {entry.rank}
                       </div>
                       <div>
-                        <div className="font-medium text-foreground">{entry.user}</div>
+                        <div className="font-medium text-foreground">
+                          {entry.walletAddress === address ? getDisplayName() : entry.user}
+                        </div>
                         <div className="text-sm text-muted-foreground">Level {entry.level}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-foreground">{entry.score.toLocaleString()}</div>
+                      <div className="font-bold text-foreground">{entry.score?.toLocaleString() || 0}</div>
                       <div className="text-sm text-muted-foreground">points</div>
                     </div>
                   </div>
@@ -275,7 +532,7 @@ export function GamificationDashboard() {
             </Card>
             <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-foreground">{userStats.totalRewards.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-foreground">{userStats.totalRewards?.toLocaleString() || 0}</div>
                 <div className="text-sm text-muted-foreground">Total Rewards</div>
               </CardContent>
             </Card>
@@ -318,6 +575,66 @@ export function GamificationDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Success Notification */}
+      {showSuccessNotification && (
+        <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg animate-slide-in-up">
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <span className="text-green-800 font-medium">Profile updated successfully!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <User className="h-5 w-5" />
+              <span>Edit Profile</span>
+            </DialogTitle>
+            <DialogDescription>
+              Update your display name and title for the DAGShield network.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                placeholder="Enter your display name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This name will be shown in leaderboards and rewards
+              </p>
+            </div>
+            <div>
+              <Label>Wallet Address</Label>
+              <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                {address || 'Not connected'}
+              </div>
+            </div>
+            <div>
+              <Label>Current Title</Label>
+              <div className="text-sm text-foreground">
+                {userProfile.title}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateName} disabled={!editName.trim()}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
