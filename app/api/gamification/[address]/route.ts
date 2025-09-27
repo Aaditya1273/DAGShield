@@ -1,6 +1,17 @@
-import Database from 'better-sqlite3';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Conditional import for better-sqlite3 to avoid build issues on static export
+let Database: any = null;
+let path: any = null;
+
+try {
+  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+    Database = require('better-sqlite3');
+    path = require('path');
+  }
+} catch (error) {
+  console.warn('SQLite not available in this environment');
+}
 
 interface NodeSnapshot {
   threatsDetected?: number;
@@ -25,18 +36,21 @@ interface UserRow {
   total_nodes: number | null;
   total_staked: number | null;
   challenges_completed: number | null;
-  achievements_unlocked: number | null;
   streak: number | null;
   rank_position: number | null;
   created_at: string | null;
 }
 
-// Database connection
-const dbPath = path.join(process.cwd(), 'dagshield.db');
-const db = new Database(dbPath);
+// Initialize database (only in development)
+let db: any = null;
+if (Database && path) {
+  const dbPath = path.join(process.cwd(), 'dagshield.db');
+  db = new Database(dbPath);
+}
 
 // Initialize tables if they don't exist
-db.exec(`
+if (db) {
+  db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     wallet_address TEXT PRIMARY KEY,
     display_name TEXT,
@@ -55,16 +69,17 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+}
 
 // Prepared statements
-const getUserStmt = db.prepare('SELECT * FROM users WHERE wallet_address = ?');
-const upsertUserStmt = db.prepare(`
+const getUserStmt = db ? db.prepare('SELECT * FROM users WHERE wallet_address = ?') : null;
+const upsertUserStmt = db ? db.prepare(`
   INSERT OR REPLACE INTO users (
     wallet_address, display_name, level, experience, total_rewards,
     threats_detected, node_uptime, total_nodes, total_staked,
     challenges_completed, achievements_unlocked, streak, updated_at
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-`);
+`) : null;
 
 // Calculate real stats from node data
 function calculateUserStats(nodes: NodeSnapshot[]) {
@@ -102,6 +117,29 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+    
+    // Return fallback data if database not available (static export)
+    if (!db || !getUserStmt) {
+      return NextResponse.json({
+        success: true,
+        userStats: {
+          level: 1,
+          experience: 0,
+          nextLevelExp: 10000,
+          totalRewards: 0,
+          threatsDetected: 0,
+          nodeUptime: 0,
+          totalNodes: 0,
+          totalStaked: 0,
+          challengesCompleted: 0,
+          achievementsUnlocked: 0,
+          streak: 1,
+          rankPosition: 1
+        },
+        challenges: [],
+        leaderboard: []
+      });
+    }
     
     // Get user from database
     let user = getUserStmt.get(address);
@@ -172,6 +210,29 @@ export async function POST(
     
     // Calculate real stats from nodes
     const stats = calculateUserStats(nodes || []);
+    
+    // Return fallback data if database not available (static export)
+    if (!db || !upsertUserStmt || !getUserStmt) {
+      return NextResponse.json({
+        success: true,
+        user: {
+          walletAddress: address,
+          displayName: displayName || null,
+          level: stats.level,
+          experience: stats.experience,
+          nextLevelExp: stats.level * 10000,
+          totalRewards: stats.totalRewards,
+          threatsDetected: stats.threatsDetected,
+          nodeUptime: stats.nodeUptime,
+          totalNodes: stats.totalNodes,
+          totalStaked: stats.totalStaked,
+          challengesCompleted: stats.challengesCompleted,
+          achievementsUnlocked: stats.achievementsUnlocked,
+          streak: stats.streak,
+          rankPosition: 1
+        }
+      });
+    }
     
     // Update user in database
     upsertUserStmt.run(

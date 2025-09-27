@@ -1,6 +1,17 @@
-import Database from 'better-sqlite3';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Conditional import for better-sqlite3 to avoid build issues on static export
+let Database: any = null;
+let path: any = null;
+
+try {
+  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+    Database = require('better-sqlite3');
+    path = require('path');
+  }
+} catch (error) {
+  console.warn('SQLite not available in this environment');
+}
 
 type ChallengeType = 'weekly' | 'monthly';
 
@@ -38,12 +49,16 @@ interface ChallengeRequestBody {
   nodes?: NodeSnapshot[];
 }
 
-// Database connection
-const dbPath = path.join(process.cwd(), 'dagshield.db');
-const db = new Database(dbPath);
+// Database connection (only in development)
+let db: any = null;
+if (Database && path) {
+  const dbPath = path.join(process.cwd(), 'dagshield.db');
+  db = new Database(dbPath);
+}
 
 // Initialize challenges table
-db.exec(`
+if (db) {
+  db.exec(`
   CREATE TABLE IF NOT EXISTS user_challenges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     wallet_address TEXT,
@@ -59,6 +74,7 @@ db.exec(`
     UNIQUE(wallet_address, challenge_id)
   )
 `);
+}
 
 // Generate real challenges based on user's node data
 function generateRealChallenges(nodes: NodeSnapshot[]): ChallengeDefinition[] {
@@ -185,12 +201,12 @@ export async function POST(
     });
     
     // Get updated challenges
-    const updatedChallenges = db.prepare<ChallengeRow>(`
+    const updatedChallenges = db.prepare(`
       SELECT * FROM user_challenges WHERE wallet_address = ?
     `).all(address);
     
     // Format for frontend
-    const formattedChallenges = updatedChallenges.map((challenge) => ({
+    const formattedChallenges = updatedChallenges.map((challenge: ChallengeRow) => ({
       id: challenge.challenge_id,
       name: challenge.challenge_name,
       description: getDescriptionForChallenge(challenge.challenge_id),
