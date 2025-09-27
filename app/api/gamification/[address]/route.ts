@@ -57,7 +57,7 @@ db.exec(`
 `);
 
 // Prepared statements
-const getUserStmt = db.prepare('SELECT * FROM users WHERE wallet_address = ?') as Database.Statement<[string], UserRow>;
+const getUserStmt = db.prepare('SELECT * FROM users WHERE wallet_address = ?');
 const upsertUserStmt = db.prepare(`
   INSERT OR REPLACE INTO users (
     wallet_address, display_name, level, experience, total_rewards,
