@@ -4,6 +4,15 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-static';
 export const revalidate = false;
 
+// Generate static params for static export
+export async function generateStaticParams() {
+  return [
+    { address: '0x742d35Cc6634C0532925a3b8D8eA3C98E8b6b8A2' },
+    { address: '0x8f3c4B2A1d9E6F7C8A5B3D2E1F4A9C7B6D8E5F2A' },
+    { address: '0x1234567890abcdef1234567890abcdef12345678' }
+  ];
+}
+
 type NodeStatus = 'active' | 'maintenance' | 'inactive' | 'error'
 
 interface NodeMetrics {
