@@ -1,5 +1,6 @@
-require("@nomicfoundation/hardhat-toolbox")
-require("dotenv").config()
+require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-verify");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -10,12 +11,14 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true, // Enable IR-based code generation for better optimization
+      viaIR: true,
     },
   },
   networks: {
-    hardhat: {
-      chainId: 1337,
+    // U2U Testnet - REAL NETWORK
+    u2uTestnet: {
+      url: process.env.U2U_TESTNET_RPC || "https://rpc-nebulas-testnet.uniultra.xyz",
+      chainId: 2484,
     },
     localhost: {
       url: "http://127.0.0.1:8545",

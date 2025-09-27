@@ -1,14 +1,14 @@
 [package]
 name = "dagshield-node"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["DAGShield Team"]
-description = "High-performance Rust node client for DAGShield decentralized AI-DePIN security network"
+authors = ["DAGShield Team <team@dagshield.io>"]
+description = "High-performance DePIN node client for DAGShield network"
 license = "MIT"
-repository = "https://github.com/dagshield/node-client"
+repository = "https://github.com/dagshield/dagshield-node"
 
 [dependencies]
-# Async runtime and networking
+# Core async runtime
 tokio = { version = "1.35", features = ["full"] }
 tokio-tungstenite = "0.21"
 reqwest = { version = "0.11", features = ["json", "rustls-tls"] }

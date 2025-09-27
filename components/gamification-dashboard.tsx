@@ -187,8 +187,9 @@ const generateRealAchievements = (userStats: any) => {
 
 // Static leaderboard removed - now using real data from SQLite database
 
-// LocalStorage key for user profile
+// LocalStorage keys
 const USER_PROFILE_KEY = 'dagshield_user_profile';
+const STREAK_STORAGE_KEY = 'dagshield_user_streaks';
 
 // Helper functions for user profile
 const saveUserProfile = (address: string, profile: any) => {
@@ -220,6 +221,65 @@ export const getUserDisplayName = (address: string) => {
   return 'Anonymous';
 };
 
+type StreakData = {
+  streak: number;
+  lastActive: string;
+};
+
+const loadStreakData = (address: string): StreakData | null => {
+  try {
+    const streaks = JSON.parse(localStorage.getItem(STREAK_STORAGE_KEY) || '{}');
+    return streaks[address] || null;
+  } catch (error) {
+    console.error('Failed to load streak data:', error);
+    return null;
+  }
+};
+
+const saveStreakData = (address: string, data: StreakData) => {
+  try {
+    const streaks = JSON.parse(localStorage.getItem(STREAK_STORAGE_KEY) || '{}');
+    streaks[address] = data;
+    localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(streaks));
+  } catch (error) {
+    console.error('Failed to save streak data:', error);
+  }
+};
+
+const updateDailyStreak = (address: string): number => {
+  if (!address) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString();
+
+  const existingData = loadStreakData(address);
+
+  if (!existingData) {
+    const initial = { streak: 1, lastActive: todayISO };
+    saveStreakData(address, initial);
+    return 1;
+  }
+
+  const lastActiveDate = new Date(existingData.lastActive);
+  lastActiveDate.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((today.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
+  let streak = existingData.streak || 1;
+
+  if (diffDays === 0) {
+    streak = Math.max(streak, 1);
+  } else if (diffDays === 1) {
+    streak = streak + 1;
+  } else if (diffDays > 1) {
+    streak = 1;
+  }
+
+  const updatedData = { streak, lastActive: todayISO };
+  saveStreakData(address, updatedData);
+  return streak;
+};
+
 export function GamificationDashboard() {
   const { address } = useAccount();
   const [userProfile, setUserProfile] = useState({ name: '', title: 'Guardian Protector' });
@@ -248,16 +308,22 @@ export function GamificationDashboard() {
       setLoading(true);
       const nodes = loadNodesFromStorage();
       console.log('Loading gamification data for address:', address, 'with nodes:', nodes);
+      const currentStreak = updateDailyStreak(address);
       
       const data = await fetchGamificationData(address, nodes);
       if (data) {
         console.log('Fetched gamification data:', data);
-        setUserStats(data.userStats);
+        const mergedStats = {
+          ...data.userStats,
+          streak: Math.max(currentStreak, data.userStats?.streak ?? 1)
+        };
+        setUserStats(mergedStats);
         setChallenges(data.challenges);
         setLeaderboard(data.leaderboard);
       } else {
         // Fallback to local calculation if API fails
         const fallbackStats = generateRealUserStats(nodes);
+        fallbackStats.streak = Math.max(currentStreak, fallbackStats.streak ?? 1);
         setUserStats(fallbackStats);
         setChallenges([]);
         setLeaderboard([]);

@@ -5,12 +5,20 @@ import { usePathname } from "next/navigation"
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Settings, Shield, Menu, X, BarChart3, Server, Activity, Gift } from "lucide-react"
+import { Shield, Menu, X, BarChart3, Server, Activity, Gift, Sun, Moon } from "lucide-react"
+import { NotificationBell } from "@/components/notification-bell"
 import Link from "next/link"
 
 export function DashboardHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const pathname = usePathname()
+
+  // Simple theme toggle function
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode)
+    document.documentElement.classList.toggle('dark')
+  }
 
   // Navigation items with icons and active states
   const navItems = [
@@ -71,8 +79,8 @@ export function DashboardHeader() {
                     className={`
                       smooth-hover relative overflow-hidden group px-4 py-2
                       ${item.isActive 
-                        ? 'bg-black text-white shadow-2xl scale-105 border-2 border-gray-300 rounded-lg' 
-                        : 'hover:bg-accent/50 text-black rounded-md'
+                        ? 'bg-black text-white shadow-2xl scale-105 border-2 border-gray-300 !rounded-xl' 
+                        : 'hover:bg-accent/50 text-black !rounded-lg'
                       }
                       stagger-${index + 2}
                     `}
@@ -93,17 +101,25 @@ export function DashboardHeader() {
 
           {/* Actions */}
           <div className="flex items-center space-x-3 animate-slide-in-right">
-            <Button variant="ghost" size="icon" className="relative smooth-hover animate-scale-in stagger-1">
-              <Bell className="h-5 w-5 text-black" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive animate-pulse">3</Badge>
-            </Button>
+            <div className="animate-scale-in stagger-1">
+              <NotificationBell />
+            </div>
 
             <div className="hidden sm:block animate-scale-in stagger-2">
               <ConnectButton showBalance={false} />
             </div>
 
-            <Button variant="ghost" size="icon" className="smooth-hover animate-scale-in stagger-3">
-              <Settings className="h-5 w-5 text-black" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="smooth-hover animate-scale-in stagger-3"
+            >
+              {isDarkMode ? (
+                <Sun className="h-5 w-5 text-black dark:text-white" />
+              ) : (
+                <Moon className="h-5 w-5 text-black dark:text-white" />
+              )}
             </Button>
 
             {/* Mobile Menu Toggle */}
@@ -132,8 +148,8 @@ export function DashboardHeader() {
                       className={`
                         justify-start w-full smooth-hover relative overflow-hidden
                         ${item.isActive 
-                          ? 'bg-black text-white shadow-xl border-2 border-gray-300' 
-                          : 'hover:bg-accent/50 text-black'
+                          ? 'bg-black text-white shadow-xl border-2 border-gray-300 !rounded-xl' 
+                          : 'hover:bg-accent/50 text-black !rounded-lg'
                         }
                         stagger-${index + 1}
                       `}

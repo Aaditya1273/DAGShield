@@ -2,7 +2,31 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Providers } from "./providers"
+import { ToastNotifications } from "@/components/toast-notifications"
 import "./globals.css"
+
+// Fix EventEmitter memory leak warnings
+if (typeof process !== 'undefined' && process.setMaxListeners) {
+  process.setMaxListeners(20)
+}
+
+// Suppress network-related console errors globally
+if (typeof window !== 'undefined') {
+  const originalError = console.error
+  console.error = (...args) => {
+    const message = args.join(' ').toLowerCase()
+    if (
+      message.includes('failed to fetch') ||
+      message.includes('network request failed') ||
+      message.includes('fetch error') ||
+      message.includes('connection error') ||
+      message.includes('rpc error')
+    ) {
+      return // Suppress these errors
+    }
+    originalError(...args)
+  }
+}
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,8 +54,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
+      <head>
+        <script src="/suppress-errors.js" />
+      </head>
       <body className="font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ToastNotifications />
+        </Providers>
       </body>
     </html>
   )

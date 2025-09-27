@@ -525,7 +525,7 @@ export default function NodesPage() {
     
     try {
       // Implement staking logic here
-      console.log(`Staking ${stakeAmount} DAG tokens for node ${selectedNode.id}`);
+      console.log(`Staking ${stakeAmount} U2U tokens for node ${selectedNode.id}`);
       setShowStakeModal(false);
       setStakeAmount('');
       setSelectedNode(null);
@@ -540,7 +540,7 @@ export default function NodesPage() {
     
     try {
       // Implement unstaking logic here
-      console.log(`Unstaking ${unstakeAmount} DAG tokens from node ${selectedNode.id}`);
+      console.log(`Unstaking ${unstakeAmount} U2U tokens from node ${selectedNode.id}`);
       setShowUnstakeModal(false);
       setUnstakeAmount('');
       setSelectedNode(null);
@@ -576,7 +576,7 @@ export default function NodesPage() {
       name: config.name,
       status: 'active',
       performance: Math.floor(Math.random() * 10) + 90, // 90-99%
-      rewards: Math.floor(Math.random() * 500) + 100, // 100-600 DAG
+      rewards: Math.floor(Math.random() * 500) + 100, // 100-600 U2U
       location: regionMap[config.region] || 'Unknown',
       uptime: Math.floor(Math.random() * 5) + 95, // 95-99%
       threatsDetected: Math.floor(Math.random() * 50),
@@ -593,7 +593,7 @@ export default function NodesPage() {
       publicKey: `0x${Math.random().toString(16).substr(2, 40)}`,
       stakingAmount: parseInt(config.stakeAmount),
       validatedTransactions: Math.floor(Math.random() * 5000) + 1000,
-      earnings24h: Math.floor(Math.random() * 10) + 5, // 5-15 DAG
+      earnings24h: Math.floor(Math.random() * 10) + 5, // 5-15 U2U
       region: config.region
     };
   };
@@ -788,7 +788,7 @@ export default function NodesPage() {
                 <div className="text-2xl font-bold text-black mb-1">
                   {Math.round(stats.totalRewards).toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-600 font-medium">DAG Rewards</div>
+                <div className="text-xs text-gray-600 font-medium">U2U Rewards</div>
               </CardContent>
             </Card>
             
@@ -1073,7 +1073,7 @@ export default function NodesPage() {
                         </div>
                         <div className="text-center p-4 border rounded-lg">
                           <div className="text-2xl font-bold text-green-600">
-                            {(node.stakingAmount / 1000).toFixed(0)}K DAG
+                            {(node.stakingAmount / 1000).toFixed(0)}K U2U
                           </div>
                           <div className="text-sm text-black font-medium">Staked Amount</div>
                           <div className="flex gap-2 mt-2">
@@ -1131,14 +1131,14 @@ export default function NodesPage() {
                             {node.rewards.toFixed(2)}
                           </div>
                           <div className="text-sm text-black font-medium">Total Rewards</div>
-                          <div className="text-xs text-gray-600 mt-1">DAG Tokens</div>
+                          <div className="text-xs text-gray-600 mt-1">U2U Tokens</div>
                         </div>
                         <div className="text-center p-4 border rounded-lg">
                           <div className="text-2xl font-bold text-blue-600">
                             +{node.earnings24h.toFixed(2)}
                           </div>
                           <div className="text-sm text-black font-medium">24h Earnings</div>
-                          <div className="text-xs text-gray-600 mt-1">DAG Tokens</div>
+                          <div className="text-xs text-gray-600 mt-1">U2U Tokens</div>
                         </div>
                         <div className="text-center p-4 border rounded-lg">
                           <div className="text-2xl font-bold text-purple-600">
@@ -1165,7 +1165,7 @@ export default function NodesPage() {
                               <div className="text-sm text-gray-600">Block #{Math.floor(Math.random() * 1000000)}</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-bold text-green-600">+2.34 DAG</div>
+                              <div className="font-bold text-green-600">+2.34 U2U</div>
                               <div className="text-sm text-gray-600">2 min ago</div>
                             </div>
                           </div>
@@ -1175,7 +1175,7 @@ export default function NodesPage() {
                               <div className="text-sm text-gray-600">Security Event</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-bold text-green-600">+0.89 DAG</div>
+                              <div className="font-bold text-green-600">+0.89 U2U</div>
                               <div className="text-sm text-gray-600">15 min ago</div>
                             </div>
                           </div>
@@ -1185,7 +1185,7 @@ export default function NodesPage() {
                               <div className="text-sm text-gray-600">Daily Distribution</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-bold text-green-600">+5.67 DAG</div>
+                              <div className="font-bold text-green-600">+5.67 U2U</div>
                               <div className="text-sm text-gray-600">1 hour ago</div>
                             </div>
                           </div>
@@ -1244,7 +1244,7 @@ export default function NodesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Button 
                 variant="outline" 
-                className="h-20 flex-col"
+                className="h-20 flex-col transition-all dark:!bg-white/10 dark:!border-white/20 dark:!text-white dark:hover:!bg-white/20 dark:hover:!border-white/30"
                 onClick={() => setShowAddNodeModal(true)}
               >
                 <Plus className="h-6 w-6 mb-2" />
@@ -1252,7 +1252,7 @@ export default function NodesPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-20 flex-col"
+                className="h-20 flex-col transition-all dark:!bg-white/10 dark:!border-white/20 dark:!text-white dark:hover:!bg-white/20 dark:hover:!border-white/30"
                 onClick={() => setShowNodeSettingsModal(true)}
               >
                 <Settings className="h-6 w-6 mb-2" />
@@ -1260,7 +1260,7 @@ export default function NodesPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-20 flex-col"
+                className="h-20 flex-col transition-all dark:!bg-white/10 dark:!border-white/20 dark:!text-white dark:hover:!bg-white/20 dark:hover:!border-white/30"
                 onClick={() => router.push('/analytics')}
               >
                 <TrendingUp className="h-6 w-6 mb-2" />
@@ -1268,7 +1268,7 @@ export default function NodesPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-20 flex-col"
+                className="h-20 flex-col transition-all dark:!bg-white/10 dark:!border-white/20 dark:!text-white dark:hover:!bg-white/20 dark:hover:!border-white/30"
                 onClick={() => alert('Security logs feature coming soon!')}
               >
                 <Shield className="h-6 w-6 mb-2" />
@@ -1367,7 +1367,7 @@ export default function NodesPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="stakeAmount">Initial Stake Amount (DAG)</Label>
+              <Label htmlFor="stakeAmount">Initial Stake Amount (U2U)</Label>
               <Input
                 id="stakeAmount"
                 type="number"
@@ -1378,7 +1378,7 @@ export default function NodesPage() {
                 max={stats ? stats.totalRewards - stats.totalStaked : 0}
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Available: {stats ? (stats.totalRewards - stats.totalStaked).toLocaleString() : 0} DAG</span>
+                <span>Available: {stats ? (stats.totalRewards - stats.totalStaked).toLocaleString() : 0} U2U</span>
                 {stats && (stats.totalRewards - stats.totalStaked) > 0 && (
                   <Button
                     variant="ghost"
@@ -1396,7 +1396,7 @@ export default function NodesPage() {
               {stats && (stats.totalRewards - stats.totalStaked) <= 0 && (
                 <div className="flex items-center space-x-1 text-xs text-red-600 mt-1">
                   <AlertCircle className="h-3 w-3" />
-                  <span>No balance available. Earn DAG tokens first by running existing nodes.</span>
+                  <span>No balance available. Earn U2U tokens first by running existing nodes.</span>
                 </div>
               )}
               {newNodeConfig.stakeAmount && 
@@ -1502,12 +1502,12 @@ export default function NodesPage() {
           <DialogHeader>
             <DialogTitle>Stake More Tokens</DialogTitle>
             <DialogDescription>
-              Add more DAG tokens to increase your node's stake and potential rewards.
+              Add more U2U tokens to increase your node's stake and potential rewards.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="stakeAmount">Amount to Stake (DAG)</Label>
+              <Label htmlFor="stakeAmount">Amount to Stake (U2U)</Label>
               <Input
                 id="stakeAmount"
                 type="number"
@@ -1517,10 +1517,10 @@ export default function NodesPage() {
               />
             </div>
             <div className="text-sm text-gray-600">
-              Current stake: {selectedNode ? (selectedNode.stakingAmount / 1000).toFixed(0) : 0}K DAG
+              Current stake: {selectedNode ? (selectedNode.stakingAmount / 1000).toFixed(0) : 0}K U2U
             </div>
             <div className="text-sm text-gray-600">
-              Available balance: 12,847 DAG
+              Available balance: 12,847 U2U
             </div>
           </div>
           <DialogFooter>
@@ -1540,12 +1540,12 @@ export default function NodesPage() {
           <DialogHeader>
             <DialogTitle>Unstake Tokens</DialogTitle>
             <DialogDescription>
-              Remove DAG tokens from your node's stake. Note: This may affect your node's performance and rewards.
+              Remove U2U tokens from your node's stake. Note: This may affect your node's performance and rewards.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="unstakeAmount">Amount to Unstake (DAG)</Label>
+              <Label htmlFor="unstakeAmount">Amount to Unstake (U2U)</Label>
               <Input
                 id="unstakeAmount"
                 type="number"
@@ -1555,7 +1555,7 @@ export default function NodesPage() {
               />
             </div>
             <div className="text-sm text-gray-600">
-              Current stake: {selectedNode ? (selectedNode.stakingAmount / 1000).toFixed(0) : 0}K DAG
+              Current stake: {selectedNode ? (selectedNode.stakingAmount / 1000).toFixed(0) : 0}K U2U
             </div>
             <div className="text-sm text-yellow-600">
               ⚠️ Unstaking tokens will reduce your node's voting power and potential rewards.
@@ -1578,28 +1578,28 @@ export default function NodesPage() {
           <DialogHeader>
             <DialogTitle>Claim Rewards</DialogTitle>
             <DialogDescription>
-              Claim your accumulated DAG token rewards from all nodes.
+              Claim your accumulated U2U token rewards from all nodes.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                +{stats ? stats.totalRewards.toFixed(2) : '0.00'} DAG
+                +{stats ? stats.totalRewards.toFixed(2) : '0.00'} U2U
               </div>
               <div className="text-sm text-gray-600">Total claimable rewards</div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Validation Rewards:</span>
-                <span className="font-medium">+{stats ? (stats.totalRewards * 0.7).toFixed(2) : '0.00'} DAG</span>
+                <span className="font-medium">+{stats ? (stats.totalRewards * 0.7).toFixed(2) : '0.00'} U2U</span>
               </div>
               <div className="flex justify-between">
                 <span>Threat Detection Bonus:</span>
-                <span className="font-medium">+{stats ? (stats.totalRewards * 0.2).toFixed(2) : '0.00'} DAG</span>
+                <span className="font-medium">+{stats ? (stats.totalRewards * 0.2).toFixed(2) : '0.00'} U2U</span>
               </div>
               <div className="flex justify-between">
                 <span>Staking Rewards:</span>
-                <span className="font-medium">+{stats ? (stats.totalRewards * 0.1).toFixed(2) : '0.00'} DAG</span>
+                <span className="font-medium">+{stats ? (stats.totalRewards * 0.1).toFixed(2) : '0.00'} U2U</span>
               </div>
             </div>
           </div>

@@ -1,10 +1,46 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Zap, Globe, Users, ArrowRight, CheckCircle, Star, TrendingUp } from "lucide-react"
+import { Shield, Zap, Globe, Users, ArrowRight, CheckCircle, Star, TrendingUp, X, AlertTriangle } from "lucide-react"
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+import { useNotifications } from '@/hooks/useNotifications'
 export default function DAGShieldLanding() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(false)
+  const [showNetworkModal, setShowNetworkModal] = useState(false)
+  
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const { switchChain } = useSwitchChain()
+  
+  // Initialize notifications for welcome message
+  useNotifications(address)
+  
+  // U2U Network Configuration
+  const U2U_CHAIN_ID = 39 // U2U Mainnet chain ID
+  const isU2UNetwork = chainId === U2U_CHAIN_ID
+
+  const handleDashboardClick = () => {
+    if (!isConnected) return
+    
+    if (!isU2UNetwork) {
+      setShowNetworkModal(true)
+      return
+    }
+    
+    // Redirect to dashboard
+    window.location.href = '/dashboard'
+  }
+  
+  const handleNetworkSwitch = () => {
+    if (switchChain) {
+      switchChain({ chainId: U2U_CHAIN_ID })
+      setShowNetworkModal(false)
+    }
+  }
+  
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  }
 
   useEffect(() => {
     setIsVisible(true)
@@ -19,6 +55,49 @@ export default function DAGShieldLanding() {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Network Switch Modal */}
+      {showNetworkModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-red-500/50 rounded-3xl p-8 max-w-md w-full relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-orange-600/10 blur-3xl"></div>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNetworkModal(false)}
+                className="absolute -top-2 -right-2 p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+              </button>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle className="w-8 h-8 text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold text-white mb-4">Switch to U2U Network</h3>
+                <p className="text-gray-300 mb-6 leading-relaxed">
+                  DAGShield only works on the U2U network. Please switch your wallet to the U2U network to continue to the dashboard.
+                </p>
+                
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={handleNetworkSwitch}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-105"
+                  >
+                    Switch to U2U Network
+                  </button>
+                  <button 
+                    onClick={() => setShowNetworkModal(false)}
+                    className="w-full py-3 border border-gray-600 hover:border-gray-500 rounded-xl font-semibold text-gray-300 hover:text-white transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Animated Background */}
       <div className="absolute inset-0">
         {/* Gradient Orbs */}
@@ -69,9 +148,23 @@ export default function DAGShieldLanding() {
                 <span className="text-blue-300 text-sm font-semibold">Beta</span>
               </div>
             </div>
-            <button className={`px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 transform ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-              Connect Wallet
-            </button>
+            
+            <div className={`flex items-center space-x-4 transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+              {isConnected && address ? (
+                <>
+                  <div className="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl backdrop-blur-sm">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-green-300 text-sm font-medium">{formatAddress(address)}</span>
+                  </div>
+                  {!isU2UNetwork && (
+                    <div className="px-3 py-1 bg-gradient-to-r from-red-600/20 to-orange-600/20 border border-red-500/50 rounded-lg backdrop-blur-sm">
+                      <span className="text-red-300 text-xs font-semibold">Wrong Network</span>
+                    </div>
+                  )}
+                </>
+              ) : null}
+              <ConnectButton />
+            </div>
           </div>
         </div>
       </header>
@@ -105,13 +198,41 @@ export default function DAGShieldLanding() {
 
           {/* CTA Buttons */}
           <div className={`flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 transform transition-all duration-1000 delay-900 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-            <button className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-2xl font-bold text-xl text-white transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <span className="relative flex items-center">
-                Connect Wallet to Start
-                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
-              </span>
-            </button>
+            {!isConnected ? (
+              <div className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-2xl font-bold text-xl text-white transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/50 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <ConnectButton.Custom>
+                  {({ account, chain, openConnectModal, mounted }) => {
+                    return (
+                      <div {...(!mounted && { 'aria-hidden': true })} style={!mounted ? { opacity: 0, pointerEvents: 'none' } : {}}>
+                        {(() => {
+                          if (!mounted || !account || !chain) {
+                            return (
+                              <button onClick={openConnectModal} type="button" className="relative flex items-center">
+                                Connect Wallet to Start
+                                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    );
+                  }}
+                </ConnectButton.Custom>
+              </div>
+            ) : (
+              <button 
+                onClick={handleDashboardClick}
+                className="group px-10 py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-2xl font-bold text-xl text-white transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-green-500/50 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <span className="relative flex items-center">
+                  Go to Dashboard
+                  <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
+                </span>
+              </button>
+            )}
             
             <button className="px-10 py-5 border-2 border-blue-500/50 hover:border-blue-400 rounded-2xl font-bold text-xl text-white backdrop-blur-sm hover:bg-blue-500/10 transition-all duration-300 hover:scale-105">
               Learn More
@@ -204,10 +325,18 @@ export default function DAGShieldLanding() {
             <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
               Connect your wallet and join thousands of security contributors earning rewards while protecting the decentralized future.
             </p>
-            <button className="group px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-2xl font-bold text-2xl text-white transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <span className="relative">Connect Wallet Now</span>
-            </button>
+            <div className="transform transition-all duration-500 hover:scale-110">
+              {!isConnected ? (
+                <ConnectButton />
+              ) : (
+                <button 
+                  onClick={handleDashboardClick}
+                  className="px-10 py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-2xl font-bold text-xl text-white transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-green-500/50"
+                >
+                  Go to Dashboard
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -215,10 +344,9 @@ export default function DAGShieldLanding() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-xl py-8">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-gray-400">&copy; 2024 DAGShield. Securing the decentralized future.</p>
+          <p className="text-gray-400">&copy; 2025 DAGShield. Securing the decentralized future.</p>
         </div>
       </footer>
-
     </div>
   )
 }

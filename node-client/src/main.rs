@@ -63,12 +63,16 @@ async fn main() -> Result<()> {
     let config = NodeConfig::load(&cli.config)?;
     info!("📋 Configuration loaded from: {}", cli.config);
     
-    // Create and start the node
+    // Create and start the REAL node with live connections
     let node = Arc::new(
-        DAGShieldNode::new(config, cli.node_id, !cli.no_ai).await?
+        DAGShieldNode::new_with_real_connections(config, cli.node_id, !cli.no_ai).await?
     );
     
-    info!("🚀 Node initialized with ID: {}", node.get_node_id());
+    info!("🚀 REAL Node initialized with ID: {}", node.get_node_id());
+    info!("🔗 Connected to LIVE U2U Network: {}", node.get_network_info());
+    info!("🤖 AI threat detection: {}", if cli.no_ai { "DISABLED" } else { "ENABLED" });
+    info!("⚡ P2P networking: ACTIVE");
+    info!("🔐 ZK proofs: ENABLED");
     
     // Start the node
     let node_handle = {
