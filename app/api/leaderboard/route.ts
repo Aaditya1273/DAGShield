@@ -1,6 +1,10 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+// Required for static export
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 interface LeaderboardRow {
   wallet_address: string;
