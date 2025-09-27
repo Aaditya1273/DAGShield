@@ -32,10 +32,16 @@ DAGShield combines cutting-edge AI threat detection with decentralized physical 
 
 ### 🎮 **Gamified DePIN Network**
 - **Mobile-First**: PWA for seamless mobile node participation
-- **Reward System**: Earn DAG tokens for threat detection and uptime
+- **Reward System**: Earn U2U tokens for threat detection and uptime
 - **Leaderboards**: Compete with other nodes globally
 - **Challenges**: Weekly gamified security challenges
 - **NFT Achievements**: Collectible rewards for top performers
+
+### 🔔 **Real-time UX Enhancements**
+- **Wallet Persistence**: Seamless reconnect flow powered by `app/dashboard/page.tsx` connection guards
+- **Live Notifications**: In-app bell and toast system (`components/notification-bell.tsx`, `hooks/useNotifications.ts`) with local storage persistence
+- **U2U Staking Experience**: Node management (`app/nodes/page.tsx`) tracks U2U balances, rewards, and streak-based gamification in real time
+- **Analytics Refresh**: `app/analytics/page.tsx` now reflects live node metrics from local storage every 30 seconds
 
 ### 🌱 **Eco-Friendly Design**
 - **Carbon Tracking**: Real-time energy consumption monitoring
@@ -53,8 +59,8 @@ DAGShield combines cutting-edge AI threat detection with decentralized physical 
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/dagshield/dagshield.git
-cd dagshield
+git clone https://github.com/Aaditya1273/DAGShield.git
+cd DAGShield
 npm install
 ```
 
@@ -206,16 +212,15 @@ graph TB
    - Show 10x speed improvement over traditional blockchains
    - Display energy efficiency metrics
 
-4. **🎮 Gamification** (30s)
-   - Show leaderboards updating in real-time
-   - Demonstrate reward distribution
-   - Display mobile PWA interface
+4.### **Gamification** (30s)
+  - Show leaderboards updating in real-time
+  - Demonstrate reward distribution in U2U tokens
+  - Display mobile PWA interface
 
-### **Live Metrics Dashboard**
+### **Live Metrics Dashboard***
 - **500+ Simulated Transactions**: Real-time processing
 - **<1s DAG Latency**: Parallel execution demonstration  
 - **95%+ Detection Accuracy**: AI model performance
-- **Cross-Chain Alerts**: Multi-blockchain threat relay
 
 ## 🏆 Hackathon Advantages
 
