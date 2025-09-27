@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "export": "next export",
     "dev": "next dev --turbo",
     "dev:fast": "NEXT_PRIVATE_SKIP_SIZE_LIMIT=1 next dev --turbo",
     "lint": "next lint",
