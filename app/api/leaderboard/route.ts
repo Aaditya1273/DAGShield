@@ -90,9 +90,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     // Get user's current rank
-    const userRank = db.prepare<{ rank_position: number }>(`
+    const userRank = db.prepare(`
       SELECT rank_position FROM users WHERE wallet_address = ?
-    `).get(walletAddress);
+    `).get(walletAddress) as { rank_position: number } | undefined;
 
     return NextResponse.json({
       success: true,
