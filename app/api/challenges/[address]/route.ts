@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Required for static export
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 // Conditional import for better-sqlite3 to avoid build issues on static export
 let Database: any = null;
 let path: any = null;
