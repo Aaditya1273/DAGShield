@@ -97,7 +97,7 @@ const userStakes = [
 export function StakingInterface() {
   const [selectedPool, setSelectedPool] = useState(stakingPools[0])
   const [stakeAmount, setStakeAmount] = useState("")
-  const [unstakeAmount, setUnstakeAmount] = useState("")
+  // Removed unused unstakeAmount state - will be implemented when unstaking UI is added
 
   const calculateRewards = (amount: number, apy: number, days: number) => {
     return (amount * apy * days) / (365 * 100)

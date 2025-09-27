@@ -130,7 +130,7 @@ export function NodeManager() {
             <div className="text-center py-8">
               <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-sm text-muted-foreground">No nodes deployed</p>
-              <p className="text-xs text-muted-foreground mt-1">Click "Add Node" to get started</p>
+              <p className="text-xs text-muted-foreground mt-1">Click &quot;Add Node&quot; to get started</p>
             </div>
           ) : (
             nodes.slice(0, 3).map((node: NodeData) => (

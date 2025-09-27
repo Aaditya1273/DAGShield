@@ -1,7 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import Database from 'better-sqlite3';
+import path from 'path';
+import { NextResponse } from 'next/server';
 
-const Database = require('better-sqlite3');
-const path = require('path');
+interface LeaderboardRow {
+  wallet_address: string;
+  display_name: string | null;
+  level: number | null;
+  score: number | null;
+  created_at: string | null;
+  rank: number;
+}
 
 // Database connection
 const dbPath = path.join(process.cwd(), 'dagshield.db');
@@ -26,18 +34,18 @@ const updateRankStmt = db.prepare(`
   UPDATE users SET rank_position = ? WHERE wallet_address = ?
 `);
 
-export async function GET(request: NextRequest) {
+export async function GET(): Promise<NextResponse> {
   try {
     // Get leaderboard data
-    const leaderboard = getLeaderboardStmt.all();
-    
+    const leaderboard = getLeaderboardStmt.all() as LeaderboardRow[];
+
     // Update rank positions in database
-    leaderboard.forEach((user: any, index: number) => {
+    leaderboard.forEach((user, index) => {
       updateRankStmt.run(index + 1, user.wallet_address);
     });
-    
+
     // Format leaderboard data
-    const formattedLeaderboard = leaderboard.map((user: any) => ({
+    const formattedLeaderboard = leaderboard.map((user) => ({
       rank: user.rank,
       user: user.display_name || `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}`,
       walletAddress: user.wallet_address,
@@ -45,7 +53,7 @@ export async function GET(request: NextRequest) {
       level: user.level,
       createdAt: user.created_at
     }));
-    
+
     return NextResponse.json({
       success: true,
       leaderboard: formattedLeaderboard
@@ -60,28 +68,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { walletAddress } = body;
-    
+
     // Recalculate ranks for all users
     const allUsers = db.prepare(`
       SELECT wallet_address, total_rewards, created_at
       FROM users
       ORDER BY total_rewards DESC, created_at ASC
-    `).all();
-    
+    `).all() as { wallet_address: string }[];
+
     // Update ranks
-    allUsers.forEach((user: any, index: number) => {
+    allUsers.forEach((user, index) => {
       updateRankStmt.run(index + 1, user.wallet_address);
     });
-    
+
     // Get user's current rank
-    const userRank = db.prepare(`
+    const userRank = db.prepare<{ rank_position: number }>(`
       SELECT rank_position FROM users WHERE wallet_address = ?
     `).get(walletAddress);
-    
+
     return NextResponse.json({
       success: true,
       userRank: userRank?.rank_position || null

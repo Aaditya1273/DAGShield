@@ -3,9 +3,17 @@
  * Connects to live U2U Network and other blockchains
  */
 
-import { ethers } from 'ethers';
-import { createPublicClient, createWalletClient, http, custom } from 'viem';
-import { u2uTestnet, mainnet, polygon, bsc, avalanche } from 'viem/chains';
+import {
+  BrowserProvider,
+  Contract,
+  JsonRpcProvider,
+  Signer,
+  formatEther,
+  parseEther,
+  formatUnits,
+  keccak256,
+  toUtf8Bytes,
+} from 'ethers';
 
 // Contract ABIs (simplified - in production, import from artifacts)
 const DAG_SHIELD_TOKEN_ABI = [
@@ -81,9 +89,9 @@ export const CONTRACT_ADDRESSES = {
 
 // Real blockchain client
 export class BlockchainClient {
-  private provider: ethers.providers.JsonRpcProvider;
-  private signer: ethers.Signer | null = null;
-  private contracts: { [key: string]: ethers.Contract } = {};
+  private provider: JsonRpcProvider;
+  private signer: Signer | null = null;
+  private contracts: Record<string, Contract> = {};
   private network: string;
 
   constructor(network: string = 'u2uTestnet') {
@@ -94,7 +102,7 @@ export class BlockchainClient {
       throw new Error(`Unsupported network: ${network}`);
     }
 
-    this.provider = new ethers.providers.JsonRpcProvider(networkConfig.rpcUrl);
+    this.provider = new JsonRpcProvider(networkConfig.rpcUrl);
     this.initializeContracts();
   }
 
@@ -120,8 +128,8 @@ export class BlockchainClient {
       await this.switchNetwork();
 
       // Create signer
-      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-      this.signer = web3Provider.getSigner();
+      const browserProvider = new BrowserProvider(window.ethereum);
+      this.signer = await browserProvider.getSigner();
 
       // Reinitialize contracts with signer
       this.initializeContracts();
@@ -151,9 +159,9 @@ export class BlockchainClient {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: chainIdHex }],
       });
-    } catch (switchError: any) {
+    } catch (switchError: unknown) {
       // Network not added to wallet
-      if (switchError.code === 4902) {
+      if ((switchError as { code?: number }).code === 4902) {
         try {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
@@ -188,7 +196,7 @@ export class BlockchainClient {
     const providerOrSigner = this.signer || this.provider;
 
     if (CONTRACT_ADDRESSES.dagToken) {
-      this.contracts.dagToken = new ethers.Contract(
+      this.contracts.dagToken = new Contract(
         CONTRACT_ADDRESSES.dagToken,
         DAG_SHIELD_TOKEN_ABI,
         providerOrSigner
@@ -196,7 +204,7 @@ export class BlockchainClient {
     }
 
     if (CONTRACT_ADDRESSES.nodeRegistry) {
-      this.contracts.nodeRegistry = new ethers.Contract(
+      this.contracts.nodeRegistry = new Contract(
         CONTRACT_ADDRESSES.nodeRegistry,
         NODE_REGISTRY_ABI,
         providerOrSigner
@@ -204,7 +212,7 @@ export class BlockchainClient {
     }
 
     if (CONTRACT_ADDRESSES.oracle) {
-      this.contracts.oracle = new ethers.Contract(
+      this.contracts.oracle = new Contract(
         CONTRACT_ADDRESSES.oracle,
         ORACLE_ABI,
         providerOrSigner
@@ -222,7 +230,7 @@ export class BlockchainClient {
       }
 
       const balance = await this.contracts.dagToken.balanceOf(address);
-      return ethers.utils.formatEther(balance);
+      return formatEther(balance);
     } catch (error) {
       console.error('❌ Failed to get user balance:', error);
       throw error;
@@ -239,7 +247,7 @@ export class BlockchainClient {
       }
 
       const staked = await this.contracts.dagToken.getStakedAmount(address);
-      return ethers.utils.formatEther(staked);
+      return formatEther(staked);
     } catch (error) {
       console.error('❌ Failed to get staked amount:', error);
       throw error;
@@ -255,7 +263,7 @@ export class BlockchainClient {
         throw new Error('Contract or signer not initialized');
       }
 
-      const amountWei = ethers.utils.parseEther(amount);
+      const amountWei = parseEther(amount);
       const tx = await this.contracts.dagToken.stake(amountWei);
       
       console.log('📤 Staking transaction sent:', tx.hash);
@@ -279,7 +287,7 @@ export class BlockchainClient {
         throw new Error('Contract or signer not initialized');
       }
 
-      const amountWei = ethers.utils.parseEther(amount);
+      const amountWei = parseEther(amount);
       const tx = await this.contracts.dagToken.unstake(amountWei);
       
       console.log('📤 Unstaking transaction sent:', tx.hash);
@@ -316,7 +324,7 @@ export class BlockchainClient {
       }
 
       const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const stakeAmountWei = ethers.utils.parseEther(stakeAmount);
+      const stakeAmountWei = parseEther(stakeAmount);
 
       const tx = await this.contracts.nodeRegistry.registerNode(
         nodeId,
@@ -368,7 +376,7 @@ export class BlockchainClient {
   /**
    * Get REAL node information from blockchain
    */
-  async getNodeInfo(nodeId: string): Promise<any> {
+  async getNodeInfo(nodeId: string): Promise<unknown> {
     try {
       if (!this.contracts.nodeRegistry) {
         throw new Error('Node Registry contract not initialized');
@@ -397,12 +405,12 @@ export class BlockchainClient {
       }
 
       const metrics = await this.contracts.nodeRegistry.getNetworkMetrics();
-      
+
       return {
-        totalNodes: metrics.totalNodes.toNumber(),
-        activeNodes: metrics.activeNodes.toNumber(),
-        totalStaked: ethers.utils.formatEther(metrics.totalStaked),
-        totalRewards: ethers.utils.formatEther(metrics.totalRewards),
+        totalNodes: Number(metrics.totalNodes),
+        activeNodes: Number(metrics.activeNodes),
+        totalStaked: formatUnits(metrics.totalStaked, 'ether'),
+        totalRewards: formatUnits(metrics.totalRewards, 'ether'),
       };
     } catch (error) {
       console.error('❌ Failed to get network metrics:', error);
@@ -425,8 +433,8 @@ export class BlockchainClient {
         throw new Error('Oracle contract or signer not initialized');
       }
 
-      const alertId = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(`${threatType}-${Date.now()}`)
+      const alertId = keccak256(
+        toUtf8Bytes(`${threatType}-${Date.now()}`)
       );
 
       const tx = await this.contracts.oracle.submitThreatAlert(
@@ -476,19 +484,19 @@ export class BlockchainClient {
     onThreatDetected?: (alertId: string, threatType: string) => void;
   }): void {
     if (this.contracts.dagToken && callbacks.onStaked) {
-      this.contracts.dagToken.on('Staked', (user, amount, timestamp) => {
-        callbacks.onStaked!(user, ethers.utils.formatEther(amount));
+      this.contracts.dagToken.on('Staked', (user, amount) => {
+        callbacks.onStaked!(user, formatEther(amount));
       });
     }
 
     if (this.contracts.nodeRegistry && callbacks.onNodeDeployed) {
-      this.contracts.nodeRegistry.on('NodeRegistered', (nodeId, owner, deviceType) => {
+      this.contracts.nodeRegistry.on('NodeRegistered', (nodeId, owner) => {
         callbacks.onNodeDeployed!(nodeId, owner);
       });
     }
 
     if (this.contracts.oracle && callbacks.onThreatDetected) {
-      this.contracts.oracle.on('ThreatDetected', (alertId, threatType, confidence) => {
+      this.contracts.oracle.on('ThreatDetected', (alertId, threatType) => {
         callbacks.onThreatDetected!(alertId, threatType);
       });
     }
@@ -509,7 +517,7 @@ export class BlockchainClient {
   /**
    * Get transaction receipt
    */
-  async getTransactionReceipt(txHash: string): Promise<any> {
+  async getTransactionReceipt(txHash: string): Promise<unknown> {
     try {
       const receipt = await this.provider.getTransactionReceipt(txHash);
       return receipt;
@@ -524,8 +532,9 @@ export class BlockchainClient {
    */
   async getGasPrice(): Promise<string> {
     try {
-      const gasPrice = await this.provider.getGasPrice();
-      return ethers.utils.formatUnits(gasPrice, 'gwei');
+      const gasPrice = await this.provider.send('eth_gasPrice', []);
+      const gasPriceBigInt = BigInt(gasPrice);
+      return formatUnits(gasPriceBigInt, 'gwei');
     } catch (error) {
       console.error('❌ Failed to get gas price:', error);
       throw error;
@@ -575,12 +584,16 @@ export function useBlockchain(network?: string) {
     getStakedAmount: (address: string) => client.getStakedAmount(address),
     stakeTokens: (amount: string) => client.stakeTokens(amount),
     unstakeTokens: (amount: string) => client.unstakeTokens(amount),
-    deployNode: (params: any) => client.deployNode(params.stakeAmount, params.region, params.deviceType, params.capabilities, params.hardwareSpecs),
+    deployNode: (params: NodeDeploymentParams) => client.deployNode(params.stakeAmount, params.region, params.deviceType, params.capabilities, params.hardwareSpecs),
     getUserNodes: (address: string) => client.getUserNodes(address),
     getNetworkMetrics: () => client.getNetworkMetrics(),
-    submitThreatAlert: (params: any) => client.submitThreatAlert(params.threatType, params.confidence, params.contractAddress, params.transactionHash, params.zkProof),
+    submitThreatAlert: (params: ThreatAlertParams) => client.submitThreatAlert(params.threatType, params.confidence, params.contractAddress, params.transactionHash, params.zkProof),
     getActiveThreatAlerts: () => client.getActiveThreatAlerts(),
-    setupEventListeners: (callbacks: any) => client.setupEventListeners(callbacks),
+    setupEventListeners: (callbacks: {
+      onStaked?: (user: string, amount: string) => void;
+      onNodeDeployed?: (nodeId: string, owner: string) => void;
+      onThreatDetected?: (alertId: string, threatType: string) => void;
+    }) => client.setupEventListeners(callbacks),
     getNetworkInfo: () => client.getNetworkInfo(),
   };
 }

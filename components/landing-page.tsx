@@ -233,10 +233,11 @@ export default function DAGShieldLanding() {
                 </span>
               </button>
             )}
-            
+            <a href="https://gamma.app/docs/DAGShield-udsjx68oqi1spk2?mode=doc" target="blank">
             <button className="px-10 py-5 border-2 border-blue-500/50 hover:border-blue-400 rounded-2xl font-bold text-xl text-white backdrop-blur-sm hover:bg-blue-500/10 transition-all duration-300 hover:scale-105">
               Learn More
             </button>
+            </a>
           </div>
 
           {/* Animated Stats */}

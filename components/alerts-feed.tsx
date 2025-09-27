@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { AlertTriangle, Shield, Eye, ExternalLink, Activity, Clock, MapPin, Cpu } from "lucide-react"
+import { AlertTriangle, Shield, Eye, ExternalLink, Activity, Clock, Cpu } from "lucide-react"
 
 // Types for node data
 interface NodeData {
@@ -37,11 +37,24 @@ const loadNodesFromStorage = (): NodeData[] => {
   }
 };
 
+// Alert interface
+interface AlertData {
+  id: string;
+  type: 'critical' | 'warning' | 'info' | 'blocked';
+  title: string;
+  description: string;
+  time: string;
+  chain: string;
+  address: string;
+  confidence: number;
+  nodeId: string | null;
+  nodeName: string;
+}
+
 // Generate real alerts based on node data and activity
-const generateRealAlerts = (nodes: NodeData[]) => {
-  const alerts = [];
+const generateRealAlerts = (nodes: NodeData[]): AlertData[] => {
+  const alerts: AlertData[] = [];
   const chains = ['Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism'];
-  const regions = ['US-East', 'EU-West', 'Asia-Pacific', 'US-West', 'EU-Central'];
   
   // Generate alerts based on actual node activity
   nodes.forEach((node, index) => {
@@ -134,10 +147,10 @@ const generateRealAlerts = (nodes: NodeData[]) => {
 };
 
 export function AlertsFeed() {
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
-  const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [selectedAlert, setSelectedAlert] = useState<AlertData | null>(null);
   const [showAlertDetails, setShowAlertDetails] = useState(false);
 
   useEffect(() => {

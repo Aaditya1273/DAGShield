@@ -37,7 +37,7 @@ const loadNodesFromStorage = (): NodeData[] => {
 
 // Calculate real network metrics from nodes
 const calculateNetworkMetrics = (nodes: NodeData[]) => {
-  const activeNodes = nodes.filter(node => node.status === 'active').length;
+  // Removed unused activeNodeCount - using totalNodes for display
   const totalNodes = nodes.length;
   const avgUptime = nodes.length > 0 ? nodes.reduce((sum, node) => sum + node.uptime, 0) / nodes.length : 0;
   const avgPerformance = nodes.length > 0 ? nodes.reduce((sum, node) => sum + node.performance, 0) / nodes.length : 0;
@@ -70,7 +70,15 @@ const calculateNetworkMetrics = (nodes: NodeData[]) => {
 };
 
 export function NetworkStatus() {
-  const [networkMetrics, setNetworkMetrics] = useState<any>(null);
+  const [networkMetrics, setNetworkMetrics] = useState<{
+    activeNodes: number;
+    capacityPercentage: number;
+    networkHealth: number;
+    uptime: number;
+    energyEfficiency: number;
+    avgLatency: number;
+    consensus: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
 import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
+// Removed unused chain imports - only using U2U chains
 import '@rainbow-me/rainbowkit/styles.css'
 import { useState, useEffect, useRef } from 'react'
 
@@ -40,7 +40,7 @@ const u2uMainnet = {
 } as const
 
 // SINGLETON: Create config and queryClient only once to prevent multiple initialization
-let wagmiConfig: any = null
+let wagmiConfig: ReturnType<typeof getDefaultConfig> | null = null
 let queryClientInstance: QueryClient | null = null
 
 function getWagmiConfig() {
@@ -60,7 +60,7 @@ function getWagmiConfig() {
         // Reduce polling interval to minimize network requests
         pollingInterval: 30000, // 30 seconds instead of default 4 seconds
       })
-    } catch (error) {
+    } catch {
       // Suppress wagmi initialization errors
       console.log('Wagmi config initialized with fallback settings')
       wagmiConfig = getDefaultConfig({

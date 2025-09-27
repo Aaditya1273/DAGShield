@@ -1,7 +1,42 @@
+import Database from 'better-sqlite3';
+import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-const Database = require('better-sqlite3');
-const path = require('path');
+type ChallengeType = 'weekly' | 'monthly';
+
+interface NodeSnapshot {
+  threatsDetected?: number;
+  uptime?: number;
+  validatedTransactions?: number;
+  deploymentTimestamp?: string;
+}
+
+interface ChallengeDefinition {
+  id: string;
+  name: string;
+  description: string;
+  progress: number;
+  target: number;
+  reward: number;
+  timeLeft: string;
+  type: ChallengeType;
+  completed: boolean;
+}
+
+interface ChallengeRow {
+  wallet_address: string;
+  challenge_id: string;
+  challenge_name: string;
+  progress: number;
+  target: number;
+  completed: number;
+  reward: number;
+  challenge_type: ChallengeType;
+}
+
+interface ChallengeRequestBody {
+  nodes?: NodeSnapshot[];
+}
 
 // Database connection
 const dbPath = path.join(process.cwd(), 'dagshield.db');
@@ -26,7 +61,7 @@ db.exec(`
 `);
 
 // Generate real challenges based on user's node data
-function generateRealChallenges(nodes: any[], userStats: any) {
+function generateRealChallenges(nodes: NodeSnapshot[]): ChallengeDefinition[] {
   const totalThreats = nodes.reduce((sum, node) => sum + (node.threatsDetected || 0), 0);
   const avgUptime = nodes.length > 0 ? nodes.reduce((sum, node) => sum + (node.uptime || 0), 0) / nodes.length : 0;
   const totalTransactions = nodes.reduce((sum, node) => sum + (node.validatedTransactions || 0), 0);
@@ -122,11 +157,11 @@ export async function POST(
 ) {
   try {
     const { address } = await params;
-    const body = await request.json();
-    const { nodes, userStats } = body;
+    const body: ChallengeRequestBody = await request.json();
+    const { nodes } = body;
     
     // Generate real challenges based on current node data
-    const realChallenges = generateRealChallenges(nodes || [], userStats || {});
+    const realChallenges = generateRealChallenges(nodes || []);
     
     // Update challenges in database
     const upsertChallengeStmt = db.prepare(`
@@ -150,12 +185,12 @@ export async function POST(
     });
     
     // Get updated challenges
-    const updatedChallenges = db.prepare(`
+    const updatedChallenges = db.prepare<ChallengeRow>(`
       SELECT * FROM user_challenges WHERE wallet_address = ?
     `).all(address);
     
     // Format for frontend
-    const formattedChallenges = updatedChallenges.map((challenge: any) => ({
+    const formattedChallenges = updatedChallenges.map((challenge) => ({
       id: challenge.challenge_id,
       name: challenge.challenge_name,
       description: getDescriptionForChallenge(challenge.challenge_id),

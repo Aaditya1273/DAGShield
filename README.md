@@ -38,7 +38,7 @@ You’re live once `http://localhost:3000` loads and your wallet connects.
 
 ---
 
-## 🏆 Hackathon Highlights
+## ⭐ Super Highlights
 
 - **World-class U2U Use Case:** DAGShield leans on U2U’s DAG consensus to keep security telemetry under one second, stream parallel threat verification, and broadcast rewards in native U2U tokens via `contracts/DAGShieldToken.sol`.
 - **DePIN in Action:** Edge nodes (`node-client/`) transform phones, desktops, and IoT devices into “useful work” validators, earning streaks and payouts tracked in `components/gamification-dashboard.tsx` with SQLite persistence.

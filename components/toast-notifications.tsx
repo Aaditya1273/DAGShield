@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, CheckCircle, AlertTriangle, Info, Gift } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { useNotifications, Notification } from '@/hooks/useNotifications'
@@ -39,10 +39,10 @@ export function ToastNotifications() {
     setVisibleToasts(unreadNotifications)
   }, [notifications])
 
-  const dismissToast = (notificationId: string) => {
+  const dismissToast = useCallback((notificationId: string) => {
     markAsRead(notificationId)
     setVisibleToasts(prev => prev.filter(n => n.id !== notificationId))
-  }
+  }, [markAsRead])
 
   // Auto-dismiss toasts after 8 seconds (except welcome)
   useEffect(() => {
@@ -55,7 +55,7 @@ export function ToastNotifications() {
         return () => clearTimeout(timer)
       }
     })
-  }, [visibleToasts])
+  }, [visibleToasts, dismissToast])
 
   if (visibleToasts.length === 0) return null
 

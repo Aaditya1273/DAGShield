@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { 
   Server, 
@@ -455,7 +455,7 @@ export default function NodesPage() {
 
   // Filtered and sorted nodes
   const filteredNodes = useMemo(() => {
-    let filtered = nodes.filter(node => {
+    const filtered = nodes.filter(node => {
       const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            node.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            node.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1502,7 +1502,7 @@ export default function NodesPage() {
           <DialogHeader>
             <DialogTitle>Stake More Tokens</DialogTitle>
             <DialogDescription>
-              Add more U2U tokens to increase your node's stake and potential rewards.
+              Add more U2U tokens to increase your node&apos;s stake and potential rewards.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1540,7 +1540,7 @@ export default function NodesPage() {
           <DialogHeader>
             <DialogTitle>Unstake Tokens</DialogTitle>
             <DialogDescription>
-              Remove U2U tokens from your node's stake. Note: This may affect your node's performance and rewards.
+              Remove U2U tokens from your node&apos;s stake. Note: This may affect your node&apos;s performance and rewards.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1558,7 +1558,7 @@ export default function NodesPage() {
               Current stake: {selectedNode ? (selectedNode.stakingAmount / 1000).toFixed(0) : 0}K U2U
             </div>
             <div className="text-sm text-yellow-600">
-              ⚠️ Unstaking tokens will reduce your node's voting power and potential rewards.
+              ⚠️ Unstaking tokens will reduce your node&apos;s voting power and potential rewards.
             </div>
           </div>
           <DialogFooter>

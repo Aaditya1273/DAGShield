@@ -59,11 +59,21 @@ const calculateTokenomics = (nodes: NodeData[]) => {
   const challengeProgress = Math.min(challengeTarget, totalThreats);
   const challengePercentage = (challengeProgress / challengeTarget) * 100;
   
+  const totalBalance = Math.floor(totalRewards);
+  const stakedAmount = Math.floor(totalStaked);
+  const availableBalance = totalBalance - stakedAmount;
+
   return {
-    totalBalance: Math.floor(totalRewards),
+    totalBalance,
     dailyEarnings: Math.floor(totalEarnings24h),
-    stakedAmount: Math.floor(totalStaked),
+    stakedAmount,
     stakingPercentage: Math.round(stakingPercentage),
+    availableBalance,
+    rewardsBreakdown: {
+      validation: uptimeRewards,
+      threatDetection: threatRewards,
+      staking: challengeRewards
+    },
     threatRewards,
     uptimeRewards,
     challengeRewards,
@@ -73,8 +83,27 @@ const calculateTokenomics = (nodes: NodeData[]) => {
   };
 };
 
+interface TokenomicsData {
+  totalBalance: number;
+  dailyEarnings: number;
+  stakedAmount: number;
+  stakingPercentage: number;
+  availableBalance: number;
+  rewardsBreakdown: {
+    validation: number;
+    threatDetection: number;
+    staking: number;
+  };
+  threatRewards: number;
+  uptimeRewards: number;
+  challengeRewards: number;
+  challengeProgress: number;
+  challengeTarget: number;
+  challengePercentage: number;
+}
+
 export function TokenomicsPanel() {
-  const [tokenomics, setTokenomics] = useState<any>(null);
+  const [tokenomics, setTokenomics] = useState<TokenomicsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showStakeModal, setShowStakeModal] = useState(false);
   const [showUnstakeModal, setShowUnstakeModal] = useState(false);
@@ -151,7 +180,7 @@ export function TokenomicsPanel() {
     
     const amount = parseFloat(unstakeAmount);
     
-    if (amount > tokenomics.stakedAmount) return; // Should be disabled by validation
+    if (amount > (tokenomics?.stakedAmount || 0)) return; // Should be disabled by validation
     
     setIsUnstaking(true);
     
@@ -191,7 +220,7 @@ export function TokenomicsPanel() {
   const isUnstakeAmountValid = () => {
     if (!unstakeAmount) return false;
     const amount = parseFloat(unstakeAmount);
-    return amount > 0 && amount <= tokenomics?.stakedAmount;
+    return amount > 0 && amount <= (tokenomics?.stakedAmount || 0);
   };
 
   if (loading || !tokenomics) {

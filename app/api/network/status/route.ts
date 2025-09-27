@@ -1,7 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+
+type RegionStatus = {
+  nodes: number
+  status: 'healthy' | 'maintenance'
+}
+
+type RegionKey =
+  | 'us-east-1'
+  | 'us-west-1'
+  | 'eu-west-1'
+  | 'eu-central-1'
+  | 'ap-southeast-1'
+  | 'ap-northeast-1'
+
+type RegionsMap = Record<RegionKey, RegionStatus>
+
+interface NetworkData {
+  totalNodes: number
+  activeNodes: number
+  networkHealth: number
+  energyEfficiency: number
+  avgLatency: number
+  consensus: number
+  uptime24h: number
+  threatsPrevented24h: number
+  dataProcessed24h: number
+  transactionsValidated24h: number
+  carbonNeutral: boolean
+  regions: RegionsMap
+}
+
+interface GlobalNetworkStatus {
+  initialized: boolean
+  lastUpdate: Date
+  data: NetworkData
+}
 
 // Global network status (not user-specific)
-let globalNetworkStatus = {
+const globalNetworkStatus: GlobalNetworkStatus = {
   initialized: false,
   lastUpdate: new Date(),
   data: {
@@ -56,13 +92,18 @@ function updateNetworkStatus() {
     data.dataProcessed24h += Math.random() * 0.01;
     
     // Update regional status
-    Object.keys(data.regions).forEach(region => {
-      const regionData = data.regions[region];
-      regionData.nodes += Math.floor((Math.random() - 0.5) * 10);
-      
-      // Occasionally change status
-      if (Math.random() < 0.05) {
-        regionData.status = Math.random() > 0.8 ? 'maintenance' : 'healthy';
+    Object.entries(data.regions).forEach(([regionKey, regionData]) => {
+      const updatedNodes = regionData.nodes + Math.floor((Math.random() - 0.5) * 10)
+      const updatedStatus: RegionStatus['status'] =
+        Math.random() < 0.05
+          ? Math.random() > 0.8
+            ? 'maintenance'
+            : 'healthy'
+          : regionData.status
+
+      data.regions[regionKey as RegionKey] = {
+        nodes: updatedNodes,
+        status: updatedStatus
       }
     });
     
@@ -71,7 +112,7 @@ function updateNetworkStatus() {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Update network status
     updateNetworkStatus();

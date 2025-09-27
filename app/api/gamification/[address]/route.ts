@@ -1,7 +1,35 @@
+import Database from 'better-sqlite3';
+import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-const Database = require('better-sqlite3');
-const path = require('path');
+interface NodeSnapshot {
+  threatsDetected?: number;
+  rewards?: number;
+  uptime?: number;
+  stakingAmount?: number;
+}
+
+interface GamificationRequestBody {
+  nodes?: NodeSnapshot[];
+  displayName?: string;
+}
+
+interface UserRow {
+  wallet_address: string;
+  display_name: string | null;
+  level: number | null;
+  experience: number | null;
+  total_rewards: number | null;
+  threats_detected: number | null;
+  node_uptime: number | null;
+  total_nodes: number | null;
+  total_staked: number | null;
+  challenges_completed: number | null;
+  achievements_unlocked: number | null;
+  streak: number | null;
+  rank_position: number | null;
+  created_at: string | null;
+}
 
 // Database connection
 const dbPath = path.join(process.cwd(), 'dagshield.db');
@@ -29,7 +57,7 @@ db.exec(`
 `);
 
 // Prepared statements
-const getUserStmt = db.prepare('SELECT * FROM users WHERE wallet_address = ?');
+const getUserStmt = db.prepare<UserRow>('SELECT * FROM users WHERE wallet_address = ?');
 const upsertUserStmt = db.prepare(`
   INSERT OR REPLACE INTO users (
     wallet_address, display_name, level, experience, total_rewards,
@@ -39,7 +67,7 @@ const upsertUserStmt = db.prepare(`
 `);
 
 // Calculate real stats from node data
-function calculateUserStats(nodes: any[]) {
+function calculateUserStats(nodes: NodeSnapshot[]) {
   const totalThreats = nodes.reduce((sum, node) => sum + (node.threatsDetected || 0), 0);
   const totalRewards = nodes.reduce((sum, node) => sum + (node.rewards || 0), 0);
   const avgUptime = nodes.length > 0 ? nodes.reduce((sum, node) => sum + (node.uptime || 0), 0) / nodes.length : 0;
@@ -139,7 +167,7 @@ export async function POST(
 ) {
   try {
     const { address } = await params;
-    const body = await request.json();
+    const body: GamificationRequestBody = await request.json();
     const { nodes, displayName } = body;
     
     // Calculate real stats from nodes

@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script"
 import { Inter } from "next/font/google"
 import { Providers } from "./providers"
 import { ToastNotifications } from "@/components/toast-notifications"
@@ -54,10 +55,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
-      <head>
-        <script src="/suppress-errors.js" />
-      </head>
+      <head />
       <body className="font-sans">
+        <Script src="/suppress-errors.js" strategy="beforeInteractive" />
         <Providers>
           {children}
           <ToastNotifications />

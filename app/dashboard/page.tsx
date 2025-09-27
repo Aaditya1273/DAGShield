@@ -11,7 +11,7 @@ import { TokenomicsPanel } from "@/components/tokenomics-panel"
 import { AlertsFeed } from "@/components/alerts-feed"
 
 export default function Dashboard() {
-  const { isConnected, status } = useAccount()
+  const { status } = useAccount()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
 

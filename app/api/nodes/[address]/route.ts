@@ -1,8 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+type NodeStatus = 'active' | 'maintenance' | 'inactive' | 'error'
+
+interface NodeMetrics {
+  cpuUsage: number
+  memoryUsage: number
+  diskUsage: number
+  networkIn: number
+  networkOut: number
+  responseTime: number
+}
+
+interface NodeRecord {
+  id: string
+  name: string
+  status: NodeStatus
+  performance: number
+  rewards: number
+  location: string
+  uptime: number
+  threatsDetected: number
+  lastSeen: string
+  version: string
+  metrics: NodeMetrics
+  publicKey: string
+  stakingAmount: number
+  validatedTransactions: number
+  earnings24h: number
+  region: string
+}
+
+interface MockDatabase {
+  nodes: Map<string, NodeRecord[]>
+  initialized: boolean
+}
+
 // Mock database - In production, replace with real database
-const mockDatabase = {
-  nodes: new Map(),
+const mockDatabase: MockDatabase = {
+  nodes: new Map<string, NodeRecord[]>(),
   initialized: false
 }
 
@@ -18,7 +53,7 @@ function initializeMockData() {
   ];
 
   sampleAddresses.forEach((address, index) => {
-    const nodes = [
+    const nodes: NodeRecord[] = [
       {
         id: `dagshield-node-${String(index * 3 + 1).padStart(3, '0')}`,
         name: `Primary Shield Node ${index + 1}`,
@@ -129,7 +164,7 @@ export async function GET(
     }
     
     // Update nodes with real-time data simulation
-    nodes = nodes.map((node: any) => ({
+    nodes = nodes.map((node) => ({
       ...node,
       performance: Math.max(85, Math.min(100, node.performance + (Math.random() - 0.5) * 2)),
       metrics: {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAccount } from 'wagmi'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Shield, Zap, Activity } from "lucide-react"
@@ -48,8 +47,8 @@ const calculateThreatMetrics = (nodes: NodeData[]) => {
   const consensusLatency = Math.max(30, Math.floor(100 - avgPerformance) + Math.floor(Math.random() * 20));
   
   return {
-    threatsDetected: totalThreats,
-    threatsBlocked: blockedThreats,
+    totalThreats: totalThreats,
+    blockedThreats: blockedThreats,
     successRate: Math.round(successRate * 10) / 10,
     avgResponse: 0.3, // Keep static for now
     consensus: consensusLatency
@@ -57,8 +56,14 @@ const calculateThreatMetrics = (nodes: NodeData[]) => {
 };
 
 export function ThreatMonitor() {
-  const { address } = useAccount();
-  const [threatMetrics, setThreatMetrics] = useState<any>(null);
+  // Removed unused address variable - will be used when user-specific filtering is added
+  const [threatMetrics, setThreatMetrics] = useState<{
+    totalThreats: number;
+    blockedThreats: number;
+    successRate: number;
+    avgResponse: number;
+    consensus: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -122,11 +127,11 @@ export function ThreatMonitor() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{threatMetrics.threatsDetected.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-primary">{threatMetrics.totalThreats.toLocaleString()}</div>
             <div className="text-sm text-muted-foreground">Threats Detected</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-black">{threatMetrics.threatsBlocked.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-black">{threatMetrics.blockedThreats.toLocaleString()}</div>
             <div className="text-sm text-muted-foreground">Threats Blocked</div>
           </div>
           <div className="text-center">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, X, Check, CheckCheck, Trash2 } from 'lucide-react'
+import { Bell, X, CheckCheck, Trash2 } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { useNotifications, Notification } from '@/hooks/useNotifications'
 import { Badge } from '@/components/ui/badge'
@@ -155,7 +155,7 @@ export function NotificationBell() {
                   <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                   <p className="text-sm">No notifications yet</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    You'll see updates about your nodes and network activity here
+                    You&apos;ll see updates about your nodes and network activity here
                   </p>
                 </div>
               ) : (

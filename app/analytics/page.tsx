@@ -61,12 +61,57 @@ const getGrowthIndicator = (hasHistory: boolean, currentValue: number) => {
 };
 
 // Generate real analytics from actual node data
-const generateRealAnalytics = (nodes: NodeData[]) => {
-  const activeNodes = nodes.filter(node => node.status === 'active');
+interface DailyPerformance {
+  date: string;
+  threats: number;
+  blocked: number;
+}
+
+type AlertType = 'warning' | 'success' | 'info';
+
+interface RealTimeAlert {
+  type: AlertType;
+  message: string;
+  nodeId: string;
+  time: string;
+}
+
+interface ThreatStats {
+  total: number;
+  blocked: number;
+  successRate: number;
+  avgResponse: number;
+}
+
+interface NetworkMetrics {
+  activeNodes: number;
+  uptime: number;
+  consensus: number;
+  latency: number;
+}
+
+interface GrowthIndicators {
+  threats: string;
+  blocked: string;
+  successRate: string;
+  activeNodes: string;
+}
+
+interface AnalyticsData {
+  threatStats: ThreatStats;
+  networkMetrics: NetworkMetrics;
+  performance: {
+    daily: DailyPerformance[];
+  };
+  realTimeAlerts: RealTimeAlert[];
+  growthIndicators: GrowthIndicators;
+}
+
+const generateRealAnalytics = (nodes: NodeData[]): AnalyticsData => {
+  const activeNodeCount = nodes.filter(node => node.status === 'active').length;
   const totalThreats = nodes.reduce((sum, node) => sum + node.threatsDetected, 0);
   const avgPerformance = nodes.length > 0 ? nodes.reduce((sum, node) => sum + node.performance, 0) / nodes.length : 0;
   const avgUptime = nodes.length > 0 ? nodes.reduce((sum, node) => sum + node.uptime, 0) / nodes.length : 0;
-  const totalTransactions = nodes.reduce((sum, node) => sum + node.validatedTransactions, 0);
   const hasHistory = hasHistoricalData(nodes);
   
   // Calculate blocked threats (assuming 95% success rate based on performance)
@@ -74,7 +119,7 @@ const generateRealAnalytics = (nodes: NodeData[]) => {
   const successRate = totalThreats > 0 ? (blockedThreats / totalThreats) * 100 : 0;
   
   // Generate daily performance data (mock for last 7 days)
-  const dailyData = [];
+  const dailyData: DailyPerformance[] = [];
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   for (let i = 0; i < 7; i++) {
     const dayThreats = Math.floor(totalThreats / 7) + Math.floor(Math.random() * 20);
@@ -94,7 +139,7 @@ const generateRealAnalytics = (nodes: NodeData[]) => {
       avgResponse: 0.3 // Keep static for now
     },
     networkMetrics: {
-      activeNodes: nodes.length,
+      activeNodes: activeNodeCount,
       uptime: Math.round(avgUptime * 10) / 10,
       consensus: Math.round(avgPerformance * 10) / 10,
       latency: Math.floor(Math.random() * 30) + 30 // 30-60ms
@@ -113,8 +158,8 @@ const generateRealAnalytics = (nodes: NodeData[]) => {
 };
 
 // Generate real-time alerts based on actual nodes
-const generateRealTimeAlerts = (nodes: NodeData[]) => {
-  const alerts = [];
+const generateRealTimeAlerts = (nodes: NodeData[]): RealTimeAlert[] => {
+  const alerts: RealTimeAlert[] = [];
   
   // Add alerts based on actual node data
   nodes.forEach(node => {
@@ -162,7 +207,7 @@ const generateRealTimeAlerts = (nodes: NodeData[]) => {
 export default function AnalyticsPage() {
   const { isConnected } = useAccount()
   const router = useRouter()
-  const [analyticsData, setAnalyticsData] = useState<any>(null)
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -175,9 +220,7 @@ export default function AnalyticsPage() {
     // Load real analytics data from nodes
     const loadAnalytics = () => {
       const nodes = loadNodesFromStorage()
-      console.log('Loading analytics for nodes:', nodes)
       const realAnalytics = generateRealAnalytics(nodes)
-      console.log('Generated analytics:', realAnalytics)
       setAnalyticsData(realAnalytics)
       setLoading(false)
     }
@@ -301,7 +344,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analyticsData.performance.daily.map((day: {date: string, threats: number, blocked: number}, index: number) => (
+              {analyticsData.performance.daily.map((day, index) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-muted/20 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="font-bold text-black w-12">{day.date}</div>
@@ -367,7 +410,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {analyticsData.realTimeAlerts.map((alert: any, index: number) => (
+                {analyticsData.realTimeAlerts.map((alert, index) => (
                   <div key={index} className={`flex items-center space-x-3 p-3 rounded-lg border ${
                     alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
                     alert.type === 'success' ? 'bg-green-50 border-green-200' :

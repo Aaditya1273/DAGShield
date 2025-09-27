@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Trophy, Star, Flame, Award, Users, Clock, Edit, User, CheckCircle } from "lucide-react"
 
 // Types for node data (matching the nodes page)
@@ -111,7 +111,9 @@ const generateRealUserStats = (nodes: NodeData[]) => {
     nodeUptime: Math.round(avgUptime * 10) / 10,
     challengesCompleted,
     achievements: Math.floor(totalThreats / 50) + Math.floor(avgUptime / 25),
+    achievementsUnlocked: Math.floor(totalThreats / 50) + Math.floor(avgUptime / 25),
     rank,
+    rankPosition: rank,
     totalNodes: nodes.length,
     totalTransactions,
     totalStaked
@@ -120,8 +122,26 @@ const generateRealUserStats = (nodes: NodeData[]) => {
 
 // Static challenges removed - now using real data from SQLite database
 
+interface UserStats {
+  threatsDetected: number;
+  nodeUptime: number;
+  totalNodes: number;
+  totalStaked: number;
+  totalRewards: number;
+  level: number;
+  experience: number;
+  nextLevelExp: number;
+  challengesCompleted: number;
+  achievementsUnlocked: number;
+  achievements: number;
+  streak: number;
+  rankPosition: number;
+  rank: number;
+  totalTransactions: number;
+}
+
 // Generate real achievements based on user stats
-const generateRealAchievements = (userStats: any) => {
+const generateRealAchievements = (userStats: UserStats | null) => {
   if (!userStats) return [];
   
   return [
@@ -191,8 +211,13 @@ const generateRealAchievements = (userStats: any) => {
 const USER_PROFILE_KEY = 'dagshield_user_profile';
 const STREAK_STORAGE_KEY = 'dagshield_user_streaks';
 
+interface UserProfile {
+  name: string;
+  title: string;
+}
+
 // Helper functions for user profile
-const saveUserProfile = (address: string, profile: any) => {
+const saveUserProfile = (address: string, profile: UserProfile) => {
   try {
     const profiles = JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || '{}');
     profiles[address] = profile;
@@ -203,7 +228,7 @@ const saveUserProfile = (address: string, profile: any) => {
   }
 };
 
-const loadUserProfile = (address: string) => {
+const loadUserProfile = (address: string): UserProfile => {
   try {
     const profiles = JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || '{}');
     return profiles[address] || { name: '', title: 'Guardian Protector' };
@@ -280,15 +305,39 @@ const updateDailyStreak = (address: string): number => {
   return streak;
 };
 
+interface Challenge {
+  id: number;
+  name?: string;
+  title: string;
+  description: string;
+  reward: number;
+  progress: number;
+  target: number;
+  completed: boolean;
+  type?: string;
+  timeLeft?: string;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  walletAddress: string;
+  displayName: string;
+  user?: string;
+  level: number;
+  totalRewards: number;
+  threatsDetected: number;
+  score?: number;
+}
+
 export function GamificationDashboard() {
   const { address } = useAccount();
-  const [userProfile, setUserProfile] = useState({ name: '', title: 'Guardian Protector' });
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', title: 'Guardian Protector' });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [userStats, setUserStats] = useState<any>(null);
-  const [challenges, setChallenges] = useState<any[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Load user profile on component mount
@@ -442,7 +491,7 @@ export function GamificationDashboard() {
 
         <TabsContent value="challenges" className="space-y-4">
           <div className="grid gap-4">
-            {challenges.map((challenge: any) => (
+            {challenges.map((challenge) => (
               <Card key={challenge.id} className="bg-card border-border">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
@@ -537,7 +586,7 @@ export function GamificationDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {leaderboard.map((entry: any) => (
+                {leaderboard.map((entry) => (
                   <div
                     key={entry.rank}
                     className={`flex items-center justify-between p-3 rounded-lg ${
