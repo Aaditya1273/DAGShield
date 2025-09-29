@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Removed 'output: export' to enable API routes and server-side rendering
+  // Removed static export to enable dynamic API routes with SQLite
+  // output: 'export',
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
+  // distDir: 'out', // Not needed for dynamic deployment
   eslint: {
     ignoreDuringBuilds: true,
   },

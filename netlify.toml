@@ -1,17 +1,15 @@
 [build]
-  publish = "out"
   command = "npm install --legacy-peer-deps && npm run build"
 
+# Enable Next.js runtime
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps --production=false"
   NPM_CONFIG_PACKAGE_LOCK = "false"
   NETLIFY_USE_PNPM = "false"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 [dev]
   command = "npm run dev"
