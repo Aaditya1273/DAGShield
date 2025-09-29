@@ -355,11 +355,10 @@ export function GamificationDashboard() {
       if (!address) return;
       
       setLoading(true);
-      const nodes = loadNodesFromStorage();
-      console.log('Loading gamification data for address:', address, 'with nodes:', nodes);
+      console.log('Loading gamification data for address:', address);
       const currentStreak = updateDailyStreak(address);
       
-      const data = await fetchGamificationData(address, nodes);
+      const data = await fetchGamificationData(address, []);
       if (data) {
         console.log('Fetched gamification data:', data);
         const mergedStats = {
@@ -370,9 +369,24 @@ export function GamificationDashboard() {
         setChallenges(data.challenges);
         setLeaderboard(data.leaderboard);
       } else {
-        // Fallback to local calculation if API fails
-        const fallbackStats = generateRealUserStats(nodes);
-        fallbackStats.streak = Math.max(currentStreak, fallbackStats.streak ?? 1);
+        // Fallback to empty stats if API fails
+        const fallbackStats = {
+          level: 1,
+          experience: 0,
+          nextLevelExp: 10000,
+          totalRewards: 0,
+          totalStaked: 0,
+          totalNodes: 0,
+          threatsDetected: 0,
+          nodeUptime: 0,
+          challengesCompleted: 0,
+          achievementsUnlocked: 0,
+          achievements: 0,
+          streak: Math.max(currentStreak, 1),
+          rankPosition: 0,
+          rank: 0,
+          totalTransactions: 0
+        };
         setUserStats(fallbackStats);
         setChallenges([]);
         setLeaderboard([]);
