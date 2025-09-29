@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Server, Play, Pause, Settings, TrendingUp, Plus, Activity } from "lucide-react"
+import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Server, Plus, Activity, MapPin, Zap, Play, Pause, Settings, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation"
 
 // Types for node data
@@ -52,15 +53,59 @@ const calculateNodeSummary = (nodes: NodeData[]) => {
 };
 
 export function NodeManager() {
+  const { address } = useAccount();
   const router = useRouter()
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadNodeData = () => {
-      const nodeData = loadNodesFromStorage();
-      console.log('Loading nodes for dashboard:', nodeData);
-      setNodes(nodeData);
+    const loadNodeData = async () => {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch real data from SQLite API
+        const response = await fetch(`/api/gamification/${address}`);
+        if (!response.ok) {
+          setNodes([]);
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success && data.userStats && data.userStats.totalNodes > 0) {
+          // Generate mock nodes based on user stats for display
+          // In a real app, you'd have a separate nodes API
+          const mockNodes: NodeData[] = [];
+          for (let i = 0; i < Math.min(3, data.userStats.totalNodes); i++) {
+            mockNodes.push({
+              id: `node-${i + 1}`,
+              name: `Node ${i + 1}`,
+              status: i === 0 ? 'active' : (i === 1 ? 'maintenance' : 'active'),
+              performance: 85 + Math.floor(Math.random() * 15),
+              rewards: Math.floor(data.userStats.totalRewards / data.userStats.totalNodes),
+              location: ['New York, US', 'London, UK', 'Tokyo, JP'][i] || 'Global',
+              uptime: 96 + Math.floor(Math.random() * 4),
+              threatsDetected: Math.floor(data.userStats.threatsDetected / data.userStats.totalNodes),
+              lastSeen: '2 minutes ago',
+              version: '1.2.3',
+              stakingAmount: Math.floor(data.userStats.totalStaked / data.userStats.totalNodes),
+              validatedTransactions: 1250 + Math.floor(Math.random() * 500),
+              earnings24h: Math.floor(data.userStats.totalRewards * 0.05),
+              region: ['us-east-1', 'eu-west-1', 'ap-northeast-1'][i] || 'global'
+            });
+          }
+          setNodes(mockNodes);
+        } else {
+          setNodes([]);
+        }
+      } catch (error) {
+        console.error('Failed to load node data from API:', error);
+        setNodes([]);
+      }
+      
       setLoading(false);
     };
 
@@ -69,7 +114,7 @@ export function NodeManager() {
     // Refresh every 30 seconds
     const interval = setInterval(loadNodeData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [address]);
 
   const handleAddNode = () => {
     router.push('/nodes')

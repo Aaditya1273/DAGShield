@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAccount } from 'wagmi'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -103,6 +104,7 @@ interface TokenomicsData {
 }
 
 export function TokenomicsPanel() {
+  const { address } = useAccount();
   const [tokenomics, setTokenomics] = useState<TokenomicsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showStakeModal, setShowStakeModal] = useState(false);
@@ -115,12 +117,98 @@ export function TokenomicsPanel() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    const loadTokenomicsData = () => {
-      const nodes = loadNodesFromStorage();
-      console.log('Loading tokenomics for nodes:', nodes);
-      const metrics = calculateTokenomics(nodes);
-      console.log('Calculated tokenomics:', metrics);
-      setTokenomics(metrics);
+    const loadTokenomicsData = async () => {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch real data from SQLite API
+        const response = await fetch(`/api/gamification/${address}`);
+        if (!response.ok) {
+          // Fallback to empty metrics if API fails
+          setTokenomics({
+            totalBalance: 0,
+            dailyEarnings: 0,
+            stakedAmount: 0,
+            stakingPercentage: 0,
+            availableBalance: 0,
+            rewardsBreakdown: { validation: 0, threatDetection: 0, staking: 0 },
+            threatRewards: 0,
+            uptimeRewards: 0,
+            challengeRewards: 0,
+            challengeProgress: 0,
+            challengeTarget: 1000,
+            challengePercentage: 0
+          });
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success && data.userStats) {
+          const stats = data.userStats;
+          // Calculate metrics from real SQLite data
+          const totalBalance = stats.totalRewards || 0;
+          const stakedAmount = stats.totalStaked || 0;
+          const availableBalance = Math.max(0, totalBalance - stakedAmount);
+          const dailyEarnings = stats.totalNodes > 0 ? Math.floor(totalBalance * 0.05) : 0; // 5% daily estimate
+          
+          setTokenomics({
+            totalBalance,
+            dailyEarnings,
+            stakedAmount,
+            stakingPercentage: totalBalance > 0 ? (stakedAmount / totalBalance) * 100 : 0,
+            availableBalance,
+            rewardsBreakdown: {
+              validation: Math.floor(totalBalance * 0.4),
+              threatDetection: Math.floor(totalBalance * 0.4),
+              staking: Math.floor(totalBalance * 0.2)
+            },
+            threatRewards: Math.floor(totalBalance * 0.4),
+            uptimeRewards: Math.floor(totalBalance * 0.3),
+            challengeRewards: Math.floor(totalBalance * 0.3),
+            challengeProgress: stats.threatsDetected || 0,
+            challengeTarget: 1000,
+            challengePercentage: Math.min(100, ((stats.threatsDetected || 0) / 1000) * 100)
+          });
+        } else {
+          // No user data, show empty state
+          setTokenomics({
+            totalBalance: 0,
+            dailyEarnings: 0,
+            stakedAmount: 0,
+            stakingPercentage: 0,
+            availableBalance: 0,
+            rewardsBreakdown: { validation: 0, threatDetection: 0, staking: 0 },
+            threatRewards: 0,
+            uptimeRewards: 0,
+            challengeRewards: 0,
+            challengeProgress: 0,
+            challengeTarget: 1000,
+            challengePercentage: 0
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load tokenomics data from API:', error);
+        // Fallback to empty metrics
+        setTokenomics({
+          totalBalance: 0,
+          dailyEarnings: 0,
+          stakedAmount: 0,
+          stakingPercentage: 0,
+          availableBalance: 0,
+          rewardsBreakdown: { validation: 0, threatDetection: 0, staking: 0 },
+          threatRewards: 0,
+          uptimeRewards: 0,
+          challengeRewards: 0,
+          challengeProgress: 0,
+          challengeTarget: 1000,
+          challengePercentage: 0
+        });
+      }
+      
       setLoading(false);
     };
 
@@ -129,7 +217,7 @@ export function TokenomicsPanel() {
     // Refresh every 30 seconds
     const interval = setInterval(loadTokenomicsData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [address]);
 
   // Calculate available balance for staking (total - already staked)
   const getAvailableBalance = () => {
