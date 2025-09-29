@@ -18,7 +18,7 @@ let Database: any = null;
 let path: any = null;
 
 try {
-  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+  if (typeof window === 'undefined') {
     Database = require('better-sqlite3');
     path = require('path');
   }

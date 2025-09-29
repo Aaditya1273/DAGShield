@@ -1,10 +1,21 @@
-import Database from 'better-sqlite3';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Required for static export
 export const dynamic = 'force-static';
 export const revalidate = false;
+
+// Conditional import for better-sqlite3
+let Database: any = null;
+let path: any = null;
+
+try {
+  if (typeof window === 'undefined') {
+    Database = require('better-sqlite3');
+    path = require('path');
+  }
+} catch (error) {
+  console.warn('SQLite not available in this environment');
+}
 
 interface LeaderboardRow {
   wallet_address: string;
@@ -15,12 +26,15 @@ interface LeaderboardRow {
   rank: number;
 }
 
-// Database connection
-const dbPath = path.join(process.cwd(), 'dagshield.db');
-const db = new Database(dbPath);
+// Database connection (only if available)
+let db: any = null;
+if (Database && path) {
+  const dbPath = path.join(process.cwd(), 'dagshield.db');
+  db = new Database(dbPath);
+}
 
-// Prepared statements
-const getLeaderboardStmt = db.prepare(`
+// Prepared statements (only if database is available)
+const getLeaderboardStmt = db ? db.prepare(`
   SELECT 
     wallet_address,
     display_name,
@@ -32,14 +46,22 @@ const getLeaderboardStmt = db.prepare(`
   WHERE total_rewards > 0 OR total_nodes > 0
   ORDER BY total_rewards DESC, created_at ASC
   LIMIT 100
-`);
+`) : null;
 
-const updateRankStmt = db.prepare(`
+const updateRankStmt = db ? db.prepare(`
   UPDATE users SET rank_position = ? WHERE wallet_address = ?
-`);
+`) : null;
 
 export async function GET(): Promise<NextResponse> {
   try {
+    // Return empty leaderboard if database not available
+    if (!db || !getLeaderboardStmt || !updateRankStmt) {
+      return NextResponse.json({
+        success: true,
+        leaderboard: []
+      });
+    }
+
     // Get leaderboard data
     const leaderboard = getLeaderboardStmt.all() as LeaderboardRow[];
 
@@ -76,6 +98,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { walletAddress } = body;
+
+    // Return default rank if database not available
+    if (!db || !updateRankStmt) {
+      return NextResponse.json({
+        success: true,
+        userRank: 1
+      });
+    }
 
     // Recalculate ranks for all users
     const allUsers = db.prepare(`

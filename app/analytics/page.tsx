@@ -1,7 +1,7 @@
 'use client'
 
 import { useAccount } from 'wagmi'
-import { useRouter } from 'next/navigation'
+import { useProtectedPage } from '@/hooks/useProtectedPage'
 import { useEffect, useState } from 'react'
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -205,16 +205,9 @@ const generateRealTimeAlerts = (nodes: NodeData[]): RealTimeAlert[] => {
 };
 
 export default function AnalyticsPage() {
-  const { isConnected } = useAccount()
-  const router = useRouter()
+  const { isConnected, isChecking } = useProtectedPage()
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!isConnected) {
-      router.push('/')
-    }
-  }, [isConnected, router])
 
   useEffect(() => {
     // Load real analytics data from nodes
@@ -231,6 +224,17 @@ export default function AnalyticsPage() {
     const interval = setInterval(loadAnalytics, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking wallet connection...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!isConnected) {
     return (

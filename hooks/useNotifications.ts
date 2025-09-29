@@ -134,90 +134,63 @@ export const useNotifications = (userAddress?: string) => {
         type: 'welcome',
         title: 'Welcome to DAGShield! 🎉',
         message: 'Welcome to the decentralized AI security network. Start by deploying your first node to begin earning rewards and protecting Web3.',
-        data: { isWelcome: true }
       })
       markUserAsConnected()
     }
   }, [isNewUser, addNotification, markUserAsConnected])
 
-  // Generate node-based notifications
-  const generateNodeNotifications = useCallback(() => {
+  // Generate notifications based on user stats from API (disabled for now to prevent spam)
+  const generateNodeNotifications = useCallback(async () => {
+    if (!userAddress) return;
+    
     try {
-      const nodes = JSON.parse(localStorage.getItem('dagshield_nodes') || '[]')
+      // Fetch real user stats from API instead of localStorage
+      const response = await fetch(`/api/gamification/${userAddress}`);
+      if (!response.ok) return;
       
-      nodes.forEach((node: any) => {
-        // High performance notification
-        if (node.performance > 95 && node.threatsDetected > 50) {
-          const existingNotification = notifications.find(n => 
-            n.nodeId === node.id && n.type === 'success' && n.data?.type === 'high_performance'
-          )
-          
-          if (!existingNotification) {
-            addNotification({
-              type: 'success',
-              title: 'Excellent Node Performance! 🚀',
-              message: `Node ${node.name} is performing exceptionally well with ${node.performance}% efficiency and ${node.threatsDetected} threats detected.`,
-              nodeId: node.id,
-              data: { type: 'high_performance', performance: node.performance, threats: node.threatsDetected }
-            })
-          }
-        }
+      const data = await response.json();
+      if (!data.success || !data.userStats) return;
+      
+      // Only generate notifications if user has actual nodes (not demo data)
+      if (data.userStats.totalNodes === 0) return;
+      
+      const stats = data.userStats;
+      
+      // High rewards notification
+      if (stats.totalRewards > 1000) {
+        const existingReward = notifications.find(n => 
+          n.type === 'reward' && n.data?.type === 'milestone_reward'
+        )
         
-        // Low performance warning
-        if (node.performance < 80) {
-          const existingWarning = notifications.find(n => 
-            n.nodeId === node.id && n.type === 'warning' && n.data?.type === 'low_performance'
-          )
-          
-          if (!existingWarning) {
-            addNotification({
-              type: 'warning',
-              title: 'Node Performance Warning ⚠️',
-              message: `Node ${node.name} performance has dropped to ${node.performance}%. Consider checking your node configuration.`,
-              nodeId: node.id,
-              data: { type: 'low_performance', performance: node.performance }
-            })
-          }
+        if (!existingReward) {
+          addNotification({
+            type: 'reward',
+            title: 'Rewards Milestone! 💰',
+            message: `Congratulations! You've earned ${stats.totalRewards.toLocaleString()} DAG tokens from your nodes.`,
+            data: { type: 'milestone_reward', rewards: stats.totalRewards }
+          })
         }
+      }
+      
+      // High threat detection notification
+      if (stats.threatsDetected > 100) {
+        const existingThreat = notifications.find(n => 
+          n.type === 'success' && n.data?.type === 'threat_milestone'
+        )
         
-        // Maintenance notification
-        if (node.status === 'maintenance') {
-          const existingMaintenance = notifications.find(n => 
-            n.nodeId === node.id && n.type === 'system' && n.data?.type === 'maintenance'
-          )
-          
-          if (!existingMaintenance) {
-            addNotification({
-              type: 'system',
-              title: 'Node Under Maintenance 🔧',
-              message: `Node ${node.name} is currently under maintenance. It will resume operations shortly.`,
-              nodeId: node.id,
-              data: { type: 'maintenance' }
-            })
-          }
+        if (!existingThreat) {
+          addNotification({
+            type: 'success',
+            title: 'Threat Detection Milestone! 🛡️',
+            message: `Your nodes have successfully detected ${stats.threatsDetected} threats, keeping the network secure.`,
+            data: { type: 'threat_milestone', threats: stats.threatsDetected }
+          })
         }
-        
-        // Reward notification (when node earns significant rewards)
-        if (node.rewards > 100) {
-          const existingReward = notifications.find(n => 
-            n.nodeId === node.id && n.type === 'reward' && n.data?.rewards === node.rewards
-          )
-          
-          if (!existingReward) {
-            addNotification({
-              type: 'reward',
-              title: 'Rewards Earned! 💰',
-              message: `Node ${node.name} has earned ${node.rewards.toLocaleString()} DAG tokens from threat detection.`,
-              nodeId: node.id,
-              data: { type: 'rewards', rewards: node.rewards }
-            })
-          }
-        }
-      })
+      }
     } catch (error) {
       console.error('Failed to generate node notifications:', error)
     }
-  }, [notifications, addNotification])
+  }, [userAddress, notifications, addNotification])
 
   // Load notifications on mount and when user changes
   useEffect(() => {
@@ -231,14 +204,18 @@ export const useNotifications = (userAddress?: string) => {
     }
   }, [userAddress, addWelcomeNotification])
 
-  // Generate node notifications periodically
+  // Generate node notifications periodically (disabled to prevent spam)
   useEffect(() => {
+    // Temporarily disabled to prevent notification spam
+    // TODO: Re-enable once SQLite data is properly integrated
+    /*
     if (userAddress) {
       generateNodeNotifications()
       
       const interval = setInterval(generateNodeNotifications, 60000) // Check every minute
       return () => clearInterval(interval)
     }
+    */
   }, [userAddress, generateNodeNotifications])
 
   return {

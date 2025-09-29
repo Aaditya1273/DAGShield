@@ -1,7 +1,7 @@
 'use client'
 
 import { useAccount } from 'wagmi'
-import { useRouter } from 'next/navigation'
+import { useProtectedPage } from '@/hooks/useProtectedPage'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -417,9 +417,8 @@ const useNodeActions = () => {
 };
 
 export default function NodesPage() {
-  // ← This opening brace might be missing
-  const { isConnected, address } = useAccount();
-  const router = useRouter();
+  const { address } = useAccount();
+  const { isConnected, isChecking } = useProtectedPage();
   const { nodes, setNodes, stats, loading, error, refetch, deleteNode } = useNodeData();
   const { startNode, stopNode, restartNode } = useNodeActions();
   
@@ -659,11 +658,16 @@ export default function NodesPage() {
     return "text-red-600";
   };
 
-  useEffect(() => {
-    if (!isConnected) {
-      router.push('/');
-    }
-  }, [isConnected, router]);
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking wallet connection...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return (
