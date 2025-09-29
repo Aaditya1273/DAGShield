@@ -139,11 +139,27 @@ const useNodeData = () => {
       // Fetch real data from SQLite API
       const response = await fetch(`/api/gamification/${address}`);
       if (!response.ok) {
+        console.error(`API request failed with status: ${response.status}`);
         // No user data, show empty state
         setNodesState([]);
-        setStats(null);
+        setStats({
+          totalNodes: 0,
+          activeNodes: 0,
+          totalRewards: 0,
+          totalStaked: 0,
+          avgPerformance: 0,
+          totalThreats: 0,
+          networkUptime: 0
+        });
         setLoading(false);
         return;
+      }
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('API returned non-JSON response:', contentType);
+        throw new Error('API returned invalid response format');
       }
 
       const data = await response.json();
