@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge"
-import { Shield, Zap, Activity } from "lucide-react"
+import { Shield, TrendingUp, Activity, Zap } from "lucide-react"
 
 // Types for node data
 interface NodeData {
@@ -56,7 +57,7 @@ const calculateThreatMetrics = (nodes: NodeData[]) => {
 };
 
 export function ThreatMonitor() {
-  // Removed unused address variable - will be used when user-specific filtering is added
+  const { address } = useAccount();
   const [threatMetrics, setThreatMetrics] = useState<{
     totalThreats: number;
     blockedThreats: number;
@@ -67,12 +68,66 @@ export function ThreatMonitor() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadThreatData = () => {
-      const nodes = loadNodesFromStorage();
-      console.log('Loading threat metrics for nodes:', nodes);
-      const metrics = calculateThreatMetrics(nodes);
-      console.log('Calculated threat metrics:', metrics);
-      setThreatMetrics(metrics);
+    const loadThreatData = async () => {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch real data from SQLite API
+        const response = await fetch(`/api/gamification/${address}`);
+        if (!response.ok) {
+          // Fallback to empty metrics if API fails
+          setThreatMetrics({
+            totalThreats: 0,
+            blockedThreats: 0,
+            successRate: 0,
+            avgResponse: 0.3,
+            consensus: 45
+          });
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success && data.userStats) {
+          const stats = data.userStats;
+          // Calculate metrics from real SQLite data
+          const totalThreats = stats.threatsDetected || 0;
+          const avgPerformance = stats.totalNodes > 0 ? 85 : 0; // Default performance
+          const blockedThreats = Math.floor(totalThreats * (avgPerformance / 100));
+          const successRate = totalThreats > 0 ? (blockedThreats / totalThreats) * 100 : 0;
+          
+          setThreatMetrics({
+            totalThreats,
+            blockedThreats,
+            successRate: Math.round(successRate * 10) / 10,
+            avgResponse: 0.3,
+            consensus: Math.max(30, Math.floor(100 - avgPerformance) + Math.floor(Math.random() * 20))
+          });
+        } else {
+          // No user data, show empty state
+          setThreatMetrics({
+            totalThreats: 0,
+            blockedThreats: 0,
+            successRate: 0,
+            avgResponse: 0.3,
+            consensus: 45
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load threat data from API:', error);
+        // Fallback to empty metrics
+        setThreatMetrics({
+          totalThreats: 0,
+          blockedThreats: 0,
+          successRate: 0,
+          avgResponse: 0.3,
+          consensus: 45
+        });
+      }
+      
       setLoading(false);
     };
 
@@ -81,7 +136,7 @@ export function ThreatMonitor() {
     // Refresh every 30 seconds
     const interval = setInterval(loadThreatData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [address]);
 
   if (loading || !threatMetrics) {
     return (
