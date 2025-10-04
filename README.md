@@ -12,7 +12,7 @@
 
 *Protecting Web3 with sub-second threat detection, powered by U2U's lightning-fast DAG consensus*
 
-[🎯 **Live Demo**](https://dagshield.vercel.app) • [📖 **Documentation**](https://docs.dagshield.io) • [💬 **Discord**](https://discord.gg/dagshield) • [🐦 **Twitter**](https://twitter.com/DAGShieldIO)
+[🎯 **Live Demo**](https://dagsheild.netlify.app/) • [📖 **Documentation**](https://docs.dagshield.io) • [💬 **Discord**](https://discord.gg/dagshield) • [🐦 **Twitter**](https://twitter.com/DAGShieldIO)
 
 </div>
 
